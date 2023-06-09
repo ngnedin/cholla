@@ -1,6 +1,8 @@
 #if defined(PARTICLES) && defined(PARTICLES_CPU)
 
+#ifndef _WIN32
   #include <unistd.h>
+#endif
 
   #include <algorithm>
   #include <iostream>

@@ -49,9 +49,6 @@
     <ClCompile Include="..\src\grid\mpi_boundaries.cpp">
       <Filter>untouched</Filter>
     </ClCompile>
-    <ClCompile Include="..\src\mpi\MPI_Comm_node.c">
-      <Filter>untouched</Filter>
-    </ClCompile>
     <ClCompile Include="..\src\mpi\mpi_routines.cpp">
       <Filter>untouched</Filter>
     </ClCompile>
@@ -78,6 +75,39 @@
     </ClCompile>
     <ClCompile Include="..\src\gravity\potential_SOR_3D.cpp">
       <Filter>gravity</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\cosmology\cosmology.cpp">
+      <Filter>untouched</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\cosmology\cosmology_functions.cpp">
+      <Filter>untouched</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\cosmology\io_cosmology.cpp">
+      <Filter>untouched</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\particles\density_boundaries.cpp">
+      <Filter>untouched</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\particles\density_CIC.cpp">
+      <Filter>untouched</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\particles\gravity_CIC.cpp">
+      <Filter>untouched</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\particles\io_particles.cpp">
+      <Filter>untouched</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\particles\particles_3D.cpp">
+      <Filter>untouched</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\particles\particles_boundaries.cpp">
+      <Filter>untouched</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\particles\particles_boundaries_cpu.cpp">
+      <Filter>untouched</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\particles\particles_dynamics.cpp">
+      <Filter>untouched</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -216,9 +246,6 @@
     <ClInclude Include="..\src\io\io.h">
       <Filter>untouched</Filter>
     </ClInclude>
-    <ClInclude Include="..\src\mpi\MPI_Comm_node.h">
-      <Filter>untouched</Filter>
-    </ClInclude>
     <ClInclude Include="..\src\mpi\mpi_routines.h">
       <Filter>untouched</Filter>
     </ClInclude>
@@ -272,6 +299,24 @@
     </ClInclude>
     <ClInclude Include="..\src\gravity\paris\PoissonZero3DBlockedGPU.hpp">
       <Filter>gravity</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\cosmology\cosmology.h">
+      <Filter>untouched</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\cosmology\cosmology_functions_gpu.h">
+      <Filter>untouched</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\particles\density_CIC.h">
+      <Filter>untouched</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\particles\particles_3D.h">
+      <Filter>untouched</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\particles\particles_boundaries_gpu.h">
+      <Filter>untouched</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\particles\supernova.h">
+      <Filter>untouched</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
@@ -386,6 +431,30 @@
     <CudaCompile Include="..\src\gravity\paris\PoissonZero3DBlockedGPU.cu">
       <Filter>gravity</Filter>
     </CudaCompile>
+    <CudaCompile Include="..\src\cosmology\cosmology_functions_gpu.cu">
+      <Filter>untouched</Filter>
+    </CudaCompile>
+    <CudaCompile Include="..\src\particles\density_boundaries_gpu.cu">
+      <Filter>untouched</Filter>
+    </CudaCompile>
+    <CudaCompile Include="..\src\particles\density_CIC_gpu.cu">
+      <Filter>untouched</Filter>
+    </CudaCompile>
+    <CudaCompile Include="..\src\particles\feedback_CIC_gpu.cu">
+      <Filter>untouched</Filter>
+    </CudaCompile>
+    <CudaCompile Include="..\src\particles\gravity_CIC_gpu.cu">
+      <Filter>untouched</Filter>
+    </CudaCompile>
+    <CudaCompile Include="..\src\particles\particles_3D_gpu.cu">
+      <Filter>untouched</Filter>
+    </CudaCompile>
+    <CudaCompile Include="..\src\particles\particles_boundaries_gpu.cu">
+      <Filter>untouched</Filter>
+    </CudaCompile>
+    <CudaCompile Include="..\src\particles\particles_dynamics_gpu.cu">
+      <Filter>untouched</Filter>
+    </CudaCompile>
   </ItemGroup>
   <ItemGroup>
     <Filter Include="grid">
@@ -406,5 +475,10 @@
     <Filter Include="gravity">
       <UniqueIdentifier>{9141adfb-d0a5-420e-8031-b287b0fef8ae}</UniqueIdentifier>
     </Filter>
+  </ItemGroup>
+  <ItemGroup>
+    <Text Include="..\src\particles\starburst99_snr.txt">
+      <Filter>untouched</Filter>
+    </Text>
   </ItemGroup>
 </Project>

@@ -3,7 +3,9 @@
   #include <math.h>
   #include <stdio.h>
   #include <stdlib.h>
+#ifndef _WIN32
   #include <unistd.h>
+#endif
 
   #include "../global/global.h"
   #include "../global/global_cuda.h"

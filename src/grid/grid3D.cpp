@@ -49,7 +49,7 @@
  *  \brief Constructor for the Grid. */
 Grid3D::Grid3D(void)
 #ifdef RT
-    : Rad(this->H)
+    : Rad(*this)
 #endif
 {
   // set initialization flag to 0

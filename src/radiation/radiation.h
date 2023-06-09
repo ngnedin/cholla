@@ -10,7 +10,7 @@
 
     #define TPB_RT 1024
 
-struct Header;
+class Grid3D;
 class Grav3D;
 
 namespace PhotoRatesCSI
@@ -58,9 +58,9 @@ class Rad3D
   } rtFields;
 
   PhotoRatesCSI::TableWrapperGPU *photoRates;
-  const Header &grid;
+  Grid3D &grid;
 
-  Rad3D(const Header &grid_);
+  Rad3D(Grid3D &grid_);
   ~Rad3D();
 
   void Initialize_Start(const parameters &params);
@@ -68,7 +68,7 @@ class Rad3D
   void Initialize_GPU();
 
 #ifdef GRAVITY
-  void ComputeEddingtonTensor(const parameters &params, Grav3D& G);
+  void ComputeEddingtonTensor(const parameters &params);
 #endif
 
   void Copy_RT_Fields();

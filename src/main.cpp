@@ -184,7 +184,7 @@ int main(int argc, char *argv[])
   // Get the gravitational potential for the first timestep
   G.Compute_Gravitational_Potential(&P);
 #ifdef RT
-  G.Rad.ComputeEddingtonTensor(P,G.Grav);
+  G.Rad.ComputeEddingtonTensor(P);
   G.Rad.rtBoundaries();
 #endif
 #endif
@@ -297,7 +297,7 @@ int main(int argc, char *argv[])
     // Compute Gravitational potential for next step
     G.Compute_Gravitational_Potential(&P);
 #ifdef RT
-    G.Rad.ComputeEddingtonTensor(P,G.Grav);
+    G.Rad.ComputeEddingtonTensor(P);
     G.Rad.rtBoundaries();
 #endif
 #endif

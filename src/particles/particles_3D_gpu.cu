@@ -3,7 +3,9 @@
   #include <math.h>
   #include <stdio.h>
   #include <stdlib.h>
+#ifndef _WIN32
   #include <unistd.h>
+#endif
 
   #include "../global/global.h"
   #include "../global/global_cuda.h"
@@ -22,8 +24,8 @@ void Particles_3D::Allocate_Particles_Grid_Field_Real(Real **array_dev, int size
   #endif
   if (global_free < size * sizeof(Real)) {
     printf("ERROR: Not enough global device memory \n");
-    printf(" Available Memory: %ld  MB \n", global_free / 1000000);
-    printf(" Requested Memory: %ld  MB \n", size * sizeof(Real) / 1000000);
+    printf(" Available Memory: %zd  MB \n", global_free / 1000000);
+    printf(" Requested Memory: %zd  MB \n", size * sizeof(Real) / 1000000);
     exit(-1);
   }
   CudaSafeCall(cudaMalloc((void **)array_dev, size * sizeof(Real)));

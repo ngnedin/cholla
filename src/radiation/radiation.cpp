@@ -17,7 +17,7 @@
   #include "alt/atomic_data.h"
   #include "alt/photo_rates_csi_gpu.h"
 
-Rad3D::Rad3D(const Header& grid_) : grid(grid_)
+Rad3D::Rad3D(Grid3D& grid_) : grid(grid_)
 {
   Physics::AtomicData::Create();
   /// photoRates = new PhotoRatesCSI::TableWrapperGPU(2,6);
@@ -35,7 +35,7 @@ void Rad3D::Initialize_Start(const parameters& params)
   num_iterations = params.num_iterations;
 
   // allocate memory on the host
-  rtFields.rf = (Real*)malloc((1 + 2 * n_freq) * grid.n_cells * sizeof(Real));
+  rtFields.rf = (Real*)malloc((1 + 2 * n_freq) * grid.H.n_cells * sizeof(Real));
 
   // set boundary flags
   flags[0] = params.xl_bcnd;
@@ -59,17 +59,17 @@ void Rad3D::Initialize_Finish()
   // Allocate memory for radiation fields (non-advecting, 2 per frequency plus 1 optically thin field)
   chprintf("Allocating memory for radiation fields. \n");
   // allocate memory on the device
-  CudaSafeCall(cudaMalloc((void**)&rtFields.dev_rf, (1 + 2 * n_freq) * grid.n_cells * sizeof(Real)));
+  CudaSafeCall(cudaMalloc((void**)&rtFields.dev_rf, (1 + 2 * n_freq) * grid.H.n_cells * sizeof(Real)));
 
   // Allocate memory for Eddington tensor only on device
-  CudaSafeCall(cudaMalloc((void**)&rtFields.dev_et, 6 * grid.n_cells * sizeof(Real)));
+  CudaSafeCall(cudaMalloc((void**)&rtFields.dev_et, 6 * grid.H.n_cells * sizeof(Real)));
 
   // Allocate memory for radiation source field only on device
-  CudaSafeCall(cudaMalloc((void**)&rtFields.dev_rs, grid.n_cells * sizeof(Real)));
+  CudaSafeCall(cudaMalloc((void**)&rtFields.dev_rs, grid.H.n_cells * sizeof(Real)));
 
   // Allocate temporary fields on device
-  CudaSafeCall(cudaMalloc((void**)&rtFields.dev_abc, n_freq * grid.n_cells * sizeof(Real)));
-  CudaSafeCall(cudaMalloc((void**)&rtFields.dev_rfNew, 2 * grid.n_cells * sizeof(Real)));
+  CudaSafeCall(cudaMalloc((void**)&rtFields.dev_abc, n_freq * grid.H.n_cells * sizeof(Real)));
+  CudaSafeCall(cudaMalloc((void**)&rtFields.dev_rfNew, 2 * grid.H.n_cells * sizeof(Real)));
 
   // Initialize Field values (for now)
   this->Initialize_GPU();
@@ -96,7 +96,7 @@ void Rad3D::rtBoundaries(void)
   // Send MPI x-boundaries
   if (flags[0] == 5) {
     buffer_length =
-        Load_RT_Fields_To_Buffer(0, 0, grid.nx, grid.ny, grid.nz, grid.n_ghost, n_freq, rtFields, d_send_buffer_x0);
+        Load_RT_Fields_To_Buffer(0, 0, grid.H.nx, grid.H.ny, grid.H.nz, grid.H.n_ghost, n_freq, rtFields, d_send_buffer_x0);
   #ifndef MPI_GPU
     cudaMemcpy(h_send_buffer_x0, d_send_buffer_x0, xbsize * sizeof(Real), cudaMemcpyDeviceToHost);
   #endif
@@ -121,7 +121,7 @@ void Rad3D::rtBoundaries(void)
 
   if (flags[1] == 5) {
     buffer_length =
-        Load_RT_Fields_To_Buffer(0, 1, grid.nx, grid.ny, grid.nz, grid.n_ghost, n_freq, rtFields, d_send_buffer_x1);
+        Load_RT_Fields_To_Buffer(0, 1, grid.H.nx, grid.H.ny, grid.H.nz, grid.H.n_ghost, n_freq, rtFields, d_send_buffer_x1);
   #ifndef MPI_GPU
     cudaMemcpy(h_send_buffer_x1, d_send_buffer_x1, xbsize * sizeof(Real), cudaMemcpyDeviceToHost);
   #endif
@@ -148,10 +148,10 @@ void Rad3D::rtBoundaries(void)
 
   /* Set non-MPI x-boundaries */
   if (flags[0] == 1) {
-    Set_RT_Boundaries_Periodic(0, 0, grid.nx, grid.ny, grid.nz, grid.n_ghost, n_freq, rtFields);
+    Set_RT_Boundaries_Periodic(0, 0, grid.H.nx, grid.H.ny, grid.H.nz, grid.H.n_ghost, n_freq, rtFields);
   }
   if (flags[1] == 1) {
-    Set_RT_Boundaries_Periodic(0, 1, grid.nx, grid.ny, grid.nz, grid.n_ghost, n_freq, rtFields);
+    Set_RT_Boundaries_Periodic(0, 1, grid.H.nx, grid.H.ny, grid.H.nz, grid.H.n_ghost, n_freq, rtFields);
   }
 
   /* Receive MPI x-boundaries */
@@ -166,9 +166,9 @@ void Rad3D::rtBoundaries(void)
     copyHostToDeviceReceiveBuffer(status.MPI_TAG);
   #endif  // MPI_GPU
     if (status.MPI_TAG == 0)
-      Unload_RT_Fields_From_Buffer(0, 0, grid.nx, grid.ny, grid.nz, grid.n_ghost, n_freq, rtFields, d_recv_buffer_x0);
+      Unload_RT_Fields_From_Buffer(0, 0, grid.H.nx, grid.H.ny, grid.H.nz, grid.H.n_ghost, n_freq, rtFields, d_recv_buffer_x0);
     if (status.MPI_TAG == 1)
-      Unload_RT_Fields_From_Buffer(0, 1, grid.nx, grid.ny, grid.nz, grid.n_ghost, n_freq, rtFields, d_recv_buffer_x1);
+      Unload_RT_Fields_From_Buffer(0, 1, grid.H.nx, grid.H.ny, grid.H.nz, grid.H.n_ghost, n_freq, rtFields, d_recv_buffer_x1);
   }
 
   // Barrier between directions
@@ -180,7 +180,7 @@ void Rad3D::rtBoundaries(void)
   // Send MPI y-boundaries
   if (flags[2] == 5) {
     buffer_length =
-        Load_RT_Fields_To_Buffer(1, 0, grid.nx, grid.ny, grid.nz, grid.n_ghost, n_freq, rtFields, d_send_buffer_y0);
+        Load_RT_Fields_To_Buffer(1, 0, grid.H.nx, grid.H.ny, grid.H.nz, grid.H.n_ghost, n_freq, rtFields, d_send_buffer_y0);
   #ifndef MPI_GPU
     cudaMemcpy(h_send_buffer_y0, d_send_buffer_y0, ybsize * sizeof(Real), cudaMemcpyDeviceToHost);
   #endif
@@ -205,7 +205,7 @@ void Rad3D::rtBoundaries(void)
 
   if (flags[3] == 5) {
     buffer_length =
-        Load_RT_Fields_To_Buffer(1, 1, grid.nx, grid.ny, grid.nz, grid.n_ghost, n_freq, rtFields, d_send_buffer_y1);
+        Load_RT_Fields_To_Buffer(1, 1, grid.H.nx, grid.H.ny, grid.H.nz, grid.H.n_ghost, n_freq, rtFields, d_send_buffer_y1);
   #ifndef MPI_GPU
     cudaMemcpy(h_send_buffer_y1, d_send_buffer_y1, ybsize * sizeof(Real), cudaMemcpyDeviceToHost);
   #endif
@@ -232,10 +232,10 @@ void Rad3D::rtBoundaries(void)
 
   /* Set non-MPI y-boundaries */
   if (flags[2] == 1) {
-    Set_RT_Boundaries_Periodic(1, 0, grid.nx, grid.ny, grid.nz, grid.n_ghost, n_freq, rtFields);
+    Set_RT_Boundaries_Periodic(1, 0, grid.H.nx, grid.H.ny, grid.H.nz, grid.H.n_ghost, n_freq, rtFields);
   }
   if (flags[3] == 1) {
-    Set_RT_Boundaries_Periodic(1, 1, grid.nx, grid.ny, grid.nz, grid.n_ghost, n_freq, rtFields);
+    Set_RT_Boundaries_Periodic(1, 1, grid.H.nx, grid.H.ny, grid.H.nz, grid.H.n_ghost, n_freq, rtFields);
   }
 
   /* Receive MPI y-boundaries */
@@ -250,9 +250,9 @@ void Rad3D::rtBoundaries(void)
     copyHostToDeviceReceiveBuffer(status.MPI_TAG);
   #endif  // MPI_GPU
     if (status.MPI_TAG == 2)
-      Unload_RT_Fields_From_Buffer(1, 0, grid.nx, grid.ny, grid.nz, grid.n_ghost, n_freq, rtFields, d_recv_buffer_y0);
+      Unload_RT_Fields_From_Buffer(1, 0, grid.H.nx, grid.H.ny, grid.H.nz, grid.H.n_ghost, n_freq, rtFields, d_recv_buffer_y0);
     if (status.MPI_TAG == 3)
-      Unload_RT_Fields_From_Buffer(1, 1, grid.nx, grid.ny, grid.nz, grid.n_ghost, n_freq, rtFields, d_recv_buffer_y1);
+      Unload_RT_Fields_From_Buffer(1, 1, grid.H.nx, grid.H.ny, grid.H.nz, grid.H.n_ghost, n_freq, rtFields, d_recv_buffer_y1);
   }
 
   // Barrier between directions
@@ -264,7 +264,7 @@ void Rad3D::rtBoundaries(void)
   // Send MPI z-boundaries
   if (flags[4] == 5) {
     buffer_length =
-        Load_RT_Fields_To_Buffer(2, 0, grid.nx, grid.ny, grid.nz, grid.n_ghost, n_freq, rtFields, d_send_buffer_z0);
+        Load_RT_Fields_To_Buffer(2, 0, grid.H.nx, grid.H.ny, grid.H.nz, grid.H.n_ghost, n_freq, rtFields, d_send_buffer_z0);
     // printf("%d %d\n", buffer_length, zbsize);
   #ifndef MPI_GPU
     cudaMemcpy(h_send_buffer_z0, d_send_buffer_z0, zbsize * sizeof(Real), cudaMemcpyDeviceToHost);
@@ -290,7 +290,7 @@ void Rad3D::rtBoundaries(void)
 
   if (flags[5] == 5) {
     buffer_length =
-        Load_RT_Fields_To_Buffer(2, 1, grid.nx, grid.ny, grid.nz, grid.n_ghost, n_freq, rtFields, d_send_buffer_z1);
+        Load_RT_Fields_To_Buffer(2, 1, grid.H.nx, grid.H.ny, grid.H.nz, grid.H.n_ghost, n_freq, rtFields, d_send_buffer_z1);
     // printf("%d %d\n", buffer_length, zbsize);
   #ifndef MPI_GPU
     cudaMemcpy(h_send_buffer_z1, d_send_buffer_z1, zbsize * sizeof(Real), cudaMemcpyDeviceToHost);
@@ -318,10 +318,10 @@ void Rad3D::rtBoundaries(void)
 
   /* Set non-MPI z-boundaries */
   if (flags[4] == 1) {
-    Set_RT_Boundaries_Periodic(2, 0, grid.nx, grid.ny, grid.nz, grid.n_ghost, n_freq, rtFields);
+    Set_RT_Boundaries_Periodic(2, 0, grid.H.nx, grid.H.ny, grid.H.nz, grid.H.n_ghost, n_freq, rtFields);
   }
   if (flags[5] == 1) {
-    Set_RT_Boundaries_Periodic(2, 1, grid.nx, grid.ny, grid.nz, grid.n_ghost, n_freq, rtFields);
+    Set_RT_Boundaries_Periodic(2, 1, grid.H.nx, grid.H.ny, grid.H.nz, grid.H.n_ghost, n_freq, rtFields);
   }
 
   /* Receive MPI z-boundaries */
@@ -336,9 +336,9 @@ void Rad3D::rtBoundaries(void)
     copyHostToDeviceReceiveBuffer(status.MPI_TAG);
   #endif  // MPI_GPU
     if (status.MPI_TAG == 4)
-      Unload_RT_Fields_From_Buffer(2, 0, grid.nx, grid.ny, grid.nz, grid.n_ghost, n_freq, rtFields, d_recv_buffer_z0);
+      Unload_RT_Fields_From_Buffer(2, 0, grid.H.nx, grid.H.ny, grid.H.nz, grid.H.n_ghost, n_freq, rtFields, d_recv_buffer_z0);
     if (status.MPI_TAG == 5)
-      Unload_RT_Fields_From_Buffer(2, 1, grid.nx, grid.ny, grid.nz, grid.n_ghost, n_freq, rtFields, d_recv_buffer_z1);
+      Unload_RT_Fields_From_Buffer(2, 1, grid.H.nx, grid.H.ny, grid.H.nz, grid.H.n_ghost, n_freq, rtFields, d_recv_buffer_z1);
   }
 }
 

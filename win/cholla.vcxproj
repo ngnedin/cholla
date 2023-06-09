@@ -13,6 +13,9 @@
   <ItemGroup>
     <ClCompile Include="..\src\chemistry_gpu\chemistry_functions.cpp" />
     <ClCompile Include="..\src\chemistry_gpu\chemistry_io.cpp" />
+    <ClCompile Include="..\src\cosmology\cosmology.cpp" />
+    <ClCompile Include="..\src\cosmology\cosmology_functions.cpp" />
+    <ClCompile Include="..\src\cosmology\io_cosmology.cpp" />
     <ClCompile Include="..\src\global\global.cpp" />
     <ClCompile Include="..\src\gravity\grav3D.cpp" />
     <ClCompile Include="..\src\gravity\gravity_boundaries.cpp" />
@@ -26,8 +29,15 @@
     <ClCompile Include="..\src\io\io.cpp" />
     <ClCompile Include="..\src\main.cpp" />
     <ClCompile Include="..\src\model\disk_ICs.cpp" />
-    <ClCompile Include="..\src\mpi\MPI_Comm_node.c" />
     <ClCompile Include="..\src\mpi\mpi_routines.cpp" />
+    <ClCompile Include="..\src\particles\density_boundaries.cpp" />
+    <ClCompile Include="..\src\particles\density_CIC.cpp" />
+    <ClCompile Include="..\src\particles\gravity_CIC.cpp" />
+    <ClCompile Include="..\src\particles\io_particles.cpp" />
+    <ClCompile Include="..\src\particles\particles_3D.cpp" />
+    <ClCompile Include="..\src\particles\particles_boundaries.cpp" />
+    <ClCompile Include="..\src\particles\particles_boundaries_cpu.cpp" />
+    <ClCompile Include="..\src\particles\particles_dynamics.cpp" />
     <ClCompile Include="..\src\radiation\alt\atomic_data.cpp" />
     <ClCompile Include="..\src\radiation\alt\photo_rates_csi_gpu.cpp" />
     <ClCompile Include="..\src\radiation\alt\spectral_shape.cpp" />
@@ -42,6 +52,8 @@
     <ClInclude Include="..\src\chemistry_gpu\chemistry_gpu.h" />
     <ClInclude Include="..\src\chemistry_gpu\rates.cuh" />
     <ClInclude Include="..\src\chemistry_gpu\rates_Katz95.cuh" />
+    <ClInclude Include="..\src\cosmology\cosmology.h" />
+    <ClInclude Include="..\src\cosmology\cosmology_functions_gpu.h" />
     <ClInclude Include="..\src\global\global.h" />
     <ClInclude Include="..\src\global\global_cuda.h" />
     <ClInclude Include="..\src\gravity\grav3D.h" />
@@ -64,8 +76,11 @@
     <ClInclude Include="..\src\io\io.h" />
     <ClInclude Include="..\src\model\disk_galaxy.h" />
     <ClInclude Include="..\src\mpi\cuda_mpi_routines.h" />
-    <ClInclude Include="..\src\mpi\MPI_Comm_node.h" />
     <ClInclude Include="..\src\mpi\mpi_routines.h" />
+    <ClInclude Include="..\src\particles\density_CIC.h" />
+    <ClInclude Include="..\src\particles\particles_3D.h" />
+    <ClInclude Include="..\src\particles\particles_boundaries_gpu.h" />
+    <ClInclude Include="..\src\particles\supernova.h" />
     <ClInclude Include="..\src\radiation\alt\align.h" />
     <ClInclude Include="..\src\radiation\alt\atomic_data.h" />
     <ClInclude Include="..\src\radiation\alt\atomic_data_decl.h" />
@@ -108,6 +123,9 @@
     <CudaCompile Include="..\src\chemistry_gpu\chemistry_functions_gpu.cu">
       <AdditionalOptions Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">--extended-lambda %(AdditionalOptions)</AdditionalOptions>
     </CudaCompile>
+    <CudaCompile Include="..\src\cosmology\cosmology_functions_gpu.cu">
+      <AdditionalOptions Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">--extended-lambda %(AdditionalOptions)</AdditionalOptions>
+    </CudaCompile>
     <CudaCompile Include="..\src\global\global_cuda.cu" />
     <CudaCompile Include="..\src\gravity\gravity_boundaries_gpu.cu">
       <AdditionalOptions Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">--extended-lambda %(AdditionalOptions)</AdditionalOptions>
@@ -147,6 +165,19 @@
     <CudaCompile Include="..\src\mpi\cuda_mpi_routines.cu">
       <AdditionalOptions Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">--extended-lambda %(AdditionalOptions)</AdditionalOptions>
     </CudaCompile>
+    <CudaCompile Include="..\src\particles\density_boundaries_gpu.cu" />
+    <CudaCompile Include="..\src\particles\density_CIC_gpu.cu">
+      <AdditionalOptions Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">--extended-lambda %(AdditionalOptions)</AdditionalOptions>
+    </CudaCompile>
+    <CudaCompile Include="..\src\particles\feedback_CIC_gpu.cu" />
+    <CudaCompile Include="..\src\particles\gravity_CIC_gpu.cu">
+      <AdditionalOptions Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">--extended-lambda %(AdditionalOptions)</AdditionalOptions>
+    </CudaCompile>
+    <CudaCompile Include="..\src\particles\particles_3D_gpu.cu">
+      <AdditionalOptions Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">--extended-lambda %(AdditionalOptions)</AdditionalOptions>
+    </CudaCompile>
+    <CudaCompile Include="..\src\particles\particles_boundaries_gpu.cu" />
+    <CudaCompile Include="..\src\particles\particles_dynamics_gpu.cu" />
     <CudaCompile Include="..\src\radiation\alt\photo_rates_csi_gpu.GPU.cu" />
     <CudaCompile Include="..\src\radiation\alt\static_table_gpu.cu" />
     <CudaCompile Include="..\src\radiation\RT_functions.cu">
@@ -170,6 +201,9 @@
     </CudaCompile>
     <CudaCompile Include="..\src\utils\gpu_arrays_functions.cu" />
     <CudaCompile Include="..\src\utils\reduction_utilities.cu" />
+  </ItemGroup>
+  <ItemGroup>
+    <Text Include="..\src\particles\starburst99_snr.txt" />
   </ItemGroup>
   <PropertyGroup Label="Globals">
     <ProjectGuid>{C11D49FF-0FDE-4932-8094-653151AF2B45}</ProjectGuid>
@@ -207,7 +241,7 @@
     <ClCompile>
       <WarningLevel>Level3</WarningLevel>
       <Optimization>Disabled</Optimization>
-      <PreprocessorDefinitions>GRAVITY_GPU;GRAVITY;PARIS;RT;CHEMISTRY_GPU;_XKEYCHECK_H;H5_BUILT_AS_DYNAMIC_LIB;HDF5;OUTPUT;SCALAR;OUTPUT_CHEMISTRY;OUTPUT_RADIATION;CUDA;GIT_HASH="NNN";MACRO_FLAGS="NNN";MPI_CHOLLA;PRECISION=2;PPMC;HLLC;SIMPLE;DENSITY_FLOOR;TEMPERATURE_FLOOR;WIN32;WIN64;_DEBUG;_CONSOLE;%(PreprocessorDefinitions);_CRT_SECURE_NO_WARNINGS</PreprocessorDefinitions>
+      <PreprocessorDefinitions>CUDA_ERROR_CHECK;COSMOLOGY;PARTICLES;PARTICLES_CPU;GRAVITY_GPU;GRAVITY;PARIS;RT;CHEMISTRY_GPU;_XKEYCHECK_H;H5_BUILT_AS_DYNAMIC_LIB;HDF5;OUTPUT;SCALAR;OUTPUT_CHEMISTRY;OUTPUT_RADIATION;CUDA;GIT_HASH="0123456789012345678901234567890123456789";MACRO_FLAGS="NNN";MPI_CHOLLA;PRECISION=2;PPMC;HLLC;SIMPLE;DENSITY_FLOOR;TEMPERATURE_FLOOR;WIN32;WIN64;_DEBUG;_CONSOLE;%(PreprocessorDefinitions);_CRT_SECURE_NO_WARNINGS</PreprocessorDefinitions>
       <AdditionalIncludeDirectories>C:\Users\Home\Anaconda3\Library\include;C:\Users\Nick\Anaconda3\Library\include;%(AdditionalIncludeDirectories);$(CudaToolkitIncludeDir);C:\Program Files (x86)\Microsoft SDKs\MPI\Include</AdditionalIncludeDirectories>
       <DisableSpecificWarnings>4244;4101</DisableSpecificWarnings>
       <LanguageStandard>stdcpp17</LanguageStandard>

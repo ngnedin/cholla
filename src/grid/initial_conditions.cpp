@@ -1506,7 +1506,7 @@ void Grid3D::Chemistry_Test(struct parameters P)
 
 #ifdef COSMOLOGY
   Real H0, Omega_M, Omega_L, Omega_b, current_z, rho_gas_mean, kpc_cgs, G, z, h, mu, T0, U, rho_gas;
-  Real HI_frac, HII_frac, HeI_frac, HeII_frac, HeIII_frac, e_frac, metal_frac, _min;
+  Real HI_frac, HII_frac, HeI_frac, HeII_frac, HeIII_frac, metal_frac, _min;
 
   H0      = P.H0;
   Omega_M = P.Omega_M;
@@ -1546,7 +1546,7 @@ void Grid3D::Chemistry_Test(struct parameters P)
   metal_frac = INITIAL_FRACTION_METAL;
 
   mu = (HI_frac + HII_frac + HeI_frac + HeII_frac + HeIII_frac) /
-       (HI_frac + HII_frac + (HeI_frac + HeII_frac + HeIII_frac) / 4 + e_frac);
+       (HI_frac + HII_frac + (HeI_frac + HeII_frac + HeIII_frac) / 4 + HII_frac + (HeII_frac + 2 * HeIII_frac) / 4);
   U = rho_gas_mean * T0 / (gama - 1) / MP / mu * KB * 1e-10;
   chprintf(" mu = %f \n", mu);
   chprintf(" U0 = %f \n", U);

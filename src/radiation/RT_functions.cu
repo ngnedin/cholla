@@ -24,20 +24,20 @@ void Rad3D::Initialize_GPU()
 {
   // copy over data from CPU fields
   CudaSafeCall(
-      cudaMemcpy(rtFields.dev_rf, rtFields.rf, (1 + 2 * n_freq) * grid.n_cells * sizeof(Real), cudaMemcpyHostToDevice));
+      cudaMemcpy(rtFields.dev_rf, rtFields.rf, (1 + 2 * n_freq) * grid.H.n_cells * sizeof(Real), cudaMemcpyHostToDevice));
 
   // initialize values for the other fields:
   //   if these fields exist on CPU, just copy them
   //   if not, set to 0
   if (rtFields.et != nullptr) {
-    CudaSafeCall(cudaMemcpy(rtFields.dev_et, rtFields.et, 6 * grid.n_cells * sizeof(Real), cudaMemcpyHostToDevice));
+    CudaSafeCall(cudaMemcpy(rtFields.dev_et, rtFields.et, 6 * grid.H.n_cells * sizeof(Real), cudaMemcpyHostToDevice));
   } else {
-    CudaSafeCall(cudaMemset(rtFields.dev_et, 0, 6 * grid.n_cells * sizeof(Real)));
+    CudaSafeCall(cudaMemset(rtFields.dev_et, 0, 6 * grid.H.n_cells * sizeof(Real)));
   }
   if (rtFields.rs != nullptr) {
-    CudaSafeCall(cudaMemcpy(rtFields.dev_rs, rtFields.rs, grid.n_cells * sizeof(Real), cudaMemcpyHostToDevice));
+    CudaSafeCall(cudaMemcpy(rtFields.dev_rs, rtFields.rs, grid.H.n_cells * sizeof(Real), cudaMemcpyHostToDevice));
   } else {
-    CudaSafeCall(cudaMemset(rtFields.dev_rs, 0, grid.n_cells * sizeof(Real)));
+    CudaSafeCall(cudaMemset(rtFields.dev_rs, 0, grid.H.n_cells * sizeof(Real)));
   }
 }
 
@@ -45,9 +45,9 @@ void Rad3D::Copy_RT_Fields(void)
 {
   // copy data back from GPU to CPU
   CudaSafeCall(
-      cudaMemcpy(rtFields.rf, rtFields.dev_rf, (1 + 2 * n_freq) * grid.n_cells * sizeof(Real), cudaMemcpyDeviceToHost));
+      cudaMemcpy(rtFields.rf, rtFields.dev_rf, (1 + 2 * n_freq) * grid.H.n_cells * sizeof(Real), cudaMemcpyDeviceToHost));
 
-  CudaSafeCall(cudaMemcpy(rtFields.et, rtFields.dev_et, 6 * grid.n_cells * sizeof(Real), cudaMemcpyDeviceToHost));
+  CudaSafeCall(cudaMemcpy(rtFields.et, rtFields.dev_et, 6 * grid.H.n_cells * sizeof(Real), cudaMemcpyDeviceToHost));
 }
 
 int Load_RT_Fields_To_Buffer(int direction, int side, int nx, int ny, int nz, int n_ghost, int n_freq,
@@ -179,7 +179,7 @@ void __global__ Calc_Absorption_Kernel(int nx, int ny, int nz, Real dx, CrossSec
                                        const Real* __restrict__ dens, Real* __restrict__ abc);
 void Rad3D::Calc_Absorption(Real* dev_scalar)
 {
-  int ngrid = (grid.n_cells - 1) / TPB_RT + 1;
+  int ngrid = (grid.H.n_cells - 1) / TPB_RT + 1;
 
   // set values for GPU kernels
   // number of blocks per 1D grid
@@ -189,7 +189,7 @@ void Rad3D::Calc_Absorption(Real* dev_scalar)
 
   auto ufac = 1.0e-24 / Constant::mb * DENSITY_UNIT * LENGTH_UNIT;  // ufac is per length, hence multiplied by Units::Length.
   #ifdef COSMOLOGY
-  #error "Not implemented.\n"
+  ufac *= 1 / (grid.Cosmo.current_a * grid.Cosmo.current_a);
   #endif
   CrossSectionInCU xs;
   xs.HIatHI     = Physics::AtomicData::CrossSections()->csHIatHI * ufac;
@@ -200,7 +200,7 @@ void Rad3D::Calc_Absorption(Real* dev_scalar)
   xs.HeIIatHeII = Physics::AtomicData::CrossSections()->csHeIIatHeII * ufac;
 
   // Launch the kernel
-  hipLaunchKernelGGL(Calc_Absorption_Kernel, dim1dGrid, dim1dBlock, 0, 0, grid.nx, grid.ny, grid.nz, grid.dx, xs,
+  hipLaunchKernelGGL(Calc_Absorption_Kernel, dim1dGrid, dim1dBlock, 0, 0, grid.H.nx, grid.H.ny, grid.H.nz, grid.H.dx, xs,
                      dev_scalar, rtFields.dev_abc);
 }
 
@@ -214,7 +214,7 @@ void __global__ OTVETIteration_Kernel(int nx, int ny, int nz, int n_ghost, Real 
 void Rad3D::OTVETIteration(void)
 {
   const int numThreadsPerBlock = 256;
-  int ngrid                    = (grid.n_cells + numThreadsPerBlock - 1) / numThreadsPerBlock;
+  int ngrid                    = (grid.H.n_cells + numThreadsPerBlock - 1) / numThreadsPerBlock;
 
   // set values for GPU kernels
   // number of blocks per 1D grid
@@ -225,30 +225,30 @@ void Rad3D::OTVETIteration(void)
   // Launch the kernel for one frequency at a time
   for (int freq = 0; freq < n_freq; freq++) {
     auto rfOT      = rtFields.dev_rf;
-    auto rfNearOld = rtFields.dev_rf + grid.n_cells * (1 + freq);
-    auto rfFarOld  = rtFields.dev_rf + grid.n_cells * (1 + n_freq + freq);
-    auto rfNearNew = rtFields.dev_rfNew + grid.n_cells * 0;
-    auto rfFarNew  = rtFields.dev_rfNew + grid.n_cells * 1;
+    auto rfNearOld = rtFields.dev_rf + grid.H.n_cells * (1 + freq);
+    auto rfFarOld  = rtFields.dev_rf + grid.H.n_cells * (1 + n_freq + freq);
+    auto rfNearNew = rtFields.dev_rfNew + grid.H.n_cells * 0;
+    auto rfFarNew  = rtFields.dev_rfNew + grid.H.n_cells * 1;
 
-    hipLaunchKernelGGL(OTVETIteration_Kernel, dim1dGrid, dim1dBlock, 0, 0, grid.nx, grid.ny, grid.nz, grid.n_ghost,
-                       grid.dx, lastIteration, rsFarFactor, rtFields.dev_rs, rtFields.dev_et, rfOT, rfNearOld, rfFarOld,
-                       rtFields.dev_abc + freq * grid.n_cells, rfNearNew, rfFarNew, (freq == 0 ? 1 : 0));
-    CudaSafeCall(cudaMemcpyAsync(rfNearOld, rfNearNew, grid.n_cells * sizeof(Real), cudaMemcpyDeviceToDevice));
-    CudaSafeCall(cudaMemcpyAsync(rfFarOld, rfFarNew, grid.n_cells * sizeof(Real), cudaMemcpyDeviceToDevice));
+    hipLaunchKernelGGL(OTVETIteration_Kernel, dim1dGrid, dim1dBlock, 0, 0, grid.H.nx, grid.H.ny, grid.H.nz, grid.H.n_ghost,
+                       grid.H.dx, lastIteration, rsFarFactor, rtFields.dev_rs, rtFields.dev_et, rfOT, rfNearOld, rfFarOld,
+                       rtFields.dev_abc + freq * grid.H.n_cells, rfNearNew, rfFarNew, (freq == 0 ? 1 : 0));
+    CudaSafeCall(cudaMemcpyAsync(rfNearOld, rfNearNew, grid.H.n_cells * sizeof(Real), cudaMemcpyDeviceToDevice));
+    CudaSafeCall(cudaMemcpyAsync(rfFarOld, rfFarNew, grid.H.n_cells * sizeof(Real), cudaMemcpyDeviceToDevice));
   }
 }
 
 // CPU function that calls the GPU-based RT functions
 void Rad3D::rtSolve(Real* dev_scalar)
 {
-  auto dt = grid.dt;
+  auto dt = grid.H.dt;
 
   // first call absorption coefficient kernel
   Calc_Absorption(dev_scalar);
 
   int niters                   = this->num_iterations;
   Real speedOfLightInCodeUnits = 3e10 / VELOCITY_UNIT;
-  int niters2                  = (dt > 0 ? static_cast<int>(1 + speedOfLightInCodeUnits * dt / grid.dx) : niters);
+  int niters2                  = (dt > 0 ? static_cast<int>(1 + speedOfLightInCodeUnits * dt / grid.H.dx) : niters);
   if (niters > niters2) niters = niters2;
 
   for (int iter = 0; iter < niters; iter++) {
@@ -384,7 +384,7 @@ void Rad3D::rtSolve(Real* dev_scalar)
 
 
 #ifdef GRAVITY
-void Rad3D::ComputeEddingtonTensor(const parameters& P, Grav3D& G)
+void Rad3D::ComputeEddingtonTensor(const parameters& P)
 {
   // Compute the eddington tensor
   Real *rs, *ot, *et[6];
@@ -392,14 +392,14 @@ void Rad3D::ComputeEddingtonTensor(const parameters& P, Grav3D& G)
   #ifdef GRAVITY_GPU
   rs = rtFields.dev_rs;
   ot = rtFields.dev_rf;
-  for(int j=0; j<6; j++) et[j] = rtFields.dev_et + j*grid.n_cells;
+  for(int j=0; j<6; j++) et[j] = rtFields.dev_et + j*grid.H.n_cells;
   #else
   rs = rtFields.rs;
   ot = rtFields.rf;
-  for(int j=0; j<6; j++) et[j] = rtFields.et + j*grid.n_cells;
+  for(int j=0; j<6; j++) et[j] = rtFields.et + j*grid.H.n_cells;
   #endif
 
-  G.Poisson_solver.Get_EddingtonTensor(grid.n_ghost,rs,et,ot);
+  grid.Grav.Poisson_solver.Get_EddingtonTensor(grid.H.n_ghost,rs,et,ot);
 }
 #endif // GRAVITY
 #endif  // RT
