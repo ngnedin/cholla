@@ -1,0 +1,24 @@
+include builds/make.type.particles
+
+# Solve the equation of motion (Particles and Hydro) on a comoving frame
+DFLAGS += -DCOSMOLOGY
+
+DFLAGS += -DRT -DSCALAR -DCHEMISTRY_GPU -DPRINT_DEVICE_IDS
+# Output abundances
+DFLAGS += -DOUTPUT_CHEMISTRY
+# Output radiation fields
+DFLAGS += -DOUTPUT_RADIATION
+
+
+# Average Slow cell when the cell delta_t is very small
+#DFLAGS += -DAVERAGE_SLOW_CELLS
+
+
+# Print Initial Statistics
+DFLAGS += -DPRINT_INITIAL_STATS
+
+
+# Output all data every N_OUTPUT_COMPLETE snapshots ( These are Restart Files )
+DFLAGS += -DN_OUTPUT_COMPLETE=1
+
+

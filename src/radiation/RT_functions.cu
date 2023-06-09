@@ -187,11 +187,10 @@ void Rad3D::Calc_Absorption(Real* dev_scalar)
   //  number of threads per 1D block
   dim3 dim1dBlock(TPB_RT, 1, 1);
 
-  auto ufac =
-      1.0e-24 / Constant::mb * DENSITY_UNIT * LENGTH_UNIT;  // ufac is per length, hence multiplied by Units::Length.
-    #ifdef COSMOLOGY
-      #error "Not implemented.\n"
-    #endif
+  auto ufac = 1.0e-24 / Constant::mb * DENSITY_UNIT * LENGTH_UNIT;  // ufac is per length, hence multiplied by Units::Length.
+  #ifdef COSMOLOGY
+  #error "Not implemented.\n"
+  #endif
   CrossSectionInCU xs;
   xs.HIatHI     = Physics::AtomicData::CrossSections()->csHIatHI * ufac;
   xs.HIatHeI    = Physics::AtomicData::CrossSections()->csHIatHeI * ufac;

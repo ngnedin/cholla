@@ -1543,7 +1543,6 @@ void Grid3D::Chemistry_Test(struct parameters P)
   HeI_frac   = INITIAL_FRACTION_HEI;
   HeII_frac  = INITIAL_FRACTION_HEII;
   HeIII_frac = INITIAL_FRACTION_HEIII;
-  e_frac     = INITIAL_FRACTION_ELECTRON;
   metal_frac = INITIAL_FRACTION_METAL;
 
   mu = (HI_frac + HII_frac + HeI_frac + HeII_frac + HeIII_frac) /
@@ -1577,7 +1576,6 @@ void Grid3D::Chemistry_Test(struct parameters P)
         C.HeI_density[id]   = rho_gas_mean * HeI_frac;
         C.HeII_density[id]  = rho_gas_mean * HeII_frac;
         C.HeIII_density[id] = rho_gas_mean * HeIII_frac;
-        C.e_density[id]     = rho_gas_mean * e_frac;
   #endif
 
   #ifdef COOLING_GRACKLE
@@ -1586,7 +1584,6 @@ void Grid3D::Chemistry_Test(struct parameters P)
         C.HeI_density[id]   = rho_gas_mean * HeI_frac;
         C.HeII_density[id]  = rho_gas_mean * HeII_frac;
         C.HeIII_density[id] = rho_gas_mean * HeIII_frac;
-        C.e_density[id]     = rho_gas_mean * e_frac;
     #ifdef GRACKLE_METALS
         C.metal_density[id] = rho_gas_mean * metal_frac;
     #endif

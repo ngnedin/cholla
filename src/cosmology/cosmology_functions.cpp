@@ -111,7 +111,6 @@ void Grid3D::Change_GAS_Frame_System(bool forward)
         C.HeI_density[id] *= dens_factor;
         C.HeII_density[id] *= dens_factor;
         C.HeIII_density[id] *= dens_factor;
-        C.e_density[id] *= dens_factor;
     #ifdef GRACKLE_METALS
         C.metal_density[id] *= dens_factor;
     #endif
@@ -123,7 +122,6 @@ void Grid3D::Change_GAS_Frame_System(bool forward)
         C.HeI_density[id] *= dens_factor;
         C.HeII_density[id] *= dens_factor;
         C.HeIII_density[id] *= dens_factor;
-        C.e_density[id] *= dens_factor;
   #endif
       }
     }
