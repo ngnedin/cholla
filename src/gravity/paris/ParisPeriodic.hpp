@@ -19,6 +19,7 @@ class ParisPeriodic
    * computation of these arguments. }
    * @param[in] m[3] { Number of MPI tasks in each dimension. }
    * @param[in] id[3] { Coordinates of this MPI task, starting at `{0,0,0}`. }
+   * @param[in] dx { Cell size? }
    */
   ParisPeriodic(const int n[3], const double lo[3], const double hi[3], const int m[3], const int id[3], double dx);
 
@@ -41,7 +42,7 @@ class ParisPeriodic
    *                         Must be at least @ref bytes() bytes, likely larger
    * than the actual output field. }
    */
-  void solvePotential(size_t bytes, double *density, double *potential) const;
+  void solve(size_t bytes, double *density, double *potential) const;
   void solveEddingtonTensor(size_t bytes, double *source, double *tensor, int component) const;
 
  private:

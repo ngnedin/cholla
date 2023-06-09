@@ -35,7 +35,7 @@ ParisPeriodic::ParisPeriodic(const int n[3], const double lo[3], const double hi
 {
 }
 
-void ParisPeriodic::solvePotential(const size_t bytes, double *const density, double *const potential) const
+void ParisPeriodic::solve(const size_t bytes, double *const density, double *const potential) const
 {
   // Local copies of members for lambda capture
   const int ni = ni_, nj = nj_;

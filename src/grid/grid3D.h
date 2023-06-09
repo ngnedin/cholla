@@ -841,7 +841,7 @@ class Grid3D
   void Change_DM_Frame_System(bool forward);
   void Change_GAS_Frame_System(bool forward);
   void Change_GAS_Frame_System_GPU(bool forward);
-  void Change_Cosmological_Frame_Sytem(bool forward);
+  void Change_Cosmological_Frame_System(bool forward);
   void Advance_Particles_KDK_Cosmo_Step1_function(part_int_t p_start, part_int_t p_end);
   void Advance_Particles_KDK_Cosmo_Step2_function(part_int_t p_start, part_int_t p_end);
   Real Calc_Particles_dt_Cosmo_function(part_int_t p_start, part_int_t p_end);
@@ -900,6 +900,11 @@ class Grid3D
     #endif
   #endif  // LYA_STATISTICS
 #endif    // ANALYSIS
+
+#ifdef COSMOLOGY
+  void Generate_Cosmological_Initial_Conditions( struct parameters *P );
+#endif
+
 };
 
 // typedef for Grid3D_PointerMemberFunction

@@ -1,24 +1,26 @@
 #ifdef COSMOLOGY
 
-  #ifndef COSMOLOGY_H
-    #define COSMOLOGY_H
+#ifndef COSMOLOGY_H
+#define COSMOLOGY_H
 
-    #include <stdio.h>
-
-    #include <cmath>
-
-    #include "../global/global.h"
-    #include "../gravity/grav3D.h"
-    #include "../particles/particles_3D.h"
+#include <stdio.h>
+#include <cmath>
+#include "../global/global.h"
+#include "../particles/particles_3D.h"
+#include "../gravity/grav3D.h"
+#include "power_spectrum.h"
+#include "../fft/fft_3D.h"
 
 class Cosmology
 {
- public:
+public:
+
   Real H0;
   Real Omega_M;
   Real Omega_L;
   Real Omega_K;
   Real Omega_b;
+  Real Omega_R;
 
   Real cosmo_G;
   Real cosmo_h;
@@ -53,20 +55,54 @@ class Cosmology
   real_vector_t scale_outputs;
   Real next_output;
   bool exit_now;
+  
+  bool generate_initial_conditions;
+  struct Initial_Conditions{
+  
+    // For generating cosmological initial conditions
+    
+    int nx_local;
+    int ny_local;
+    int nz_local;
+    
+    int nx_total;
+    int ny_total;
+    int nz_total;
+    
+    Real *random_fluctuations;
+    Real *rescaled_random_fluctuations_dm;
+    Real *rescaled_random_fluctuations_gas;
+    
+    Cosmo_Power_Spectrum Power_Spectrum;
+    
+    FFT_3D FFT;
+    
+  } ICs;
+   
+  
+  
+  Cosmology( void );
+  void Initialize( struct parameters *P, Grav3D &Grav, Particles_3D &Particles );
 
-  Cosmology(void);
-  void Initialize(struct parameters *P, Grav3D &Grav, Particles_3D &Particles);
+  void Load_Scale_Outputs( struct parameters *P );
+  void Set_Scale_Outputs( struct parameters *P );
 
-  void Load_Scale_Outputs(struct parameters *P);
-  void Set_Scale_Outputs(struct parameters *P);
+  void Set_Next_Scale_Output( );
 
-  void Set_Next_Scale_Output();
+  Real Get_Hubble_Parameter( Real a );
+  Real Get_Hubble_Parameter_Full( Real a );
 
-  Real Get_Hubble_Parameter(Real a);
+  Real Get_da_from_dt( Real dt );
+  Real Get_dt_from_da( Real da );
+  
+  Real Time_Integrand( Real a );
+  Real Get_Current_Time( Real a );
+  
+  Real Growth_Factor_Integrand( Real a );
+  Real Get_Linear_Growth_Factor( Real a );
+  Real Get_Linear_Growth_Factor_Deriv( Real a );
 
-  Real Get_da_from_dt(Real dt);
-  Real Get_dt_from_da(Real da);
 };
 
-  #endif
+#endif
 #endif
