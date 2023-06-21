@@ -541,8 +541,8 @@ __global__ void Update_Chemistry_kernel(Real *dev_conserved, const Real *dev_rf,
           //  delta_a = Chem_H.H0 * sqrt( Chem_H.Omega_M/current_a + Chem_H.Omega_L*pow(current_a, 2) ) / (
           //  1000 * KPC ) * dt_hydro * Chem_H.time_units;
 
-                    // Initialize the thermal state
-                    Thermal_State TS;
+    // Initialize the thermal state
+    Thermal_State TS;
     TS.d       = dev_conserved[id] / a3;
     TS.d_HI    = dev_conserved[5 * n_cells + id] / a3;
     TS.d_HII   = dev_conserved[6 * n_cells + id] / a3;
@@ -561,7 +561,7 @@ __global__ void Update_Chemistry_kernel(Real *dev_conserved, const Real *dev_rf,
     TS.d_HeIII = fmax(TS.d_HeIII, 1e-5 * tiny);
     // TS.d_e     = fmax( TS.d_e,     tiny );  NG 221127: removed, no need to advect electrons, they are a derived field
 
-    // Use charge conservation to determine electron fractioan
+    // Use charge conservation to determine electron fraction
     TS.d_e = TS.d_HII + TS.d_HeII / 4.0 + TS.d_HeIII / 2.0;
 
     // Compute temperature at first iteration
@@ -706,7 +706,7 @@ void Do_Chemistry_Update(Real *dev_conserved, const Real *dev_rf, int nx, int ny
 
 // Calculation of k1 (HI + e --> HII + 2e)
 // k1_rate
-__device__ Real coll_i_HI_rate(Real T, Real units)
+__host__ __device__ Real coll_i_HI_rate(Real T, Real units)
 {
   Real T_ev    = T / 11605.0;
   Real logT_ev = log(T_ev);
@@ -724,7 +724,7 @@ __device__ Real coll_i_HI_rate(Real T, Real units)
 
 // Calculation of k3 (HeI + e --> HeII + 2e)
 //  k3_rate
-__device__ Real coll_i_HeI_rate(Real T, Real units)
+__host__ __device__ Real coll_i_HeI_rate(Real T, Real units)
 {
   Real T_ev    = T / 11605.0;
   Real logT_ev = log(T_ev);
@@ -742,10 +742,9 @@ __device__ Real coll_i_HeI_rate(Real T, Real units)
 
 // Calculation of k4 (HeII + e --> HeI + photon)
 //  k4_rate
-__device__ Real recomb_HeII_rate(Real T, Real units, bool use_case_B)
+__host__ __device__ Real recomb_HeII_rate(Real T, Real units, bool use_case_B)
 {
   Real T_ev    = T / 11605.0;
-  Real logT_ev = log(T_ev);
   // If case B recombination on.
   if (use_case_B) {
     return 1.26e-14 * pow(5.7067e5 / T, 0.75) / units;
@@ -761,10 +760,9 @@ __device__ Real recomb_HeII_rate(Real T, Real units, bool use_case_B)
   }
 }
 // k4_rate Case A
-__device__ Real recomb_HeII_rate_case_A(Real T, Real units)
+__host__ __device__ Real recomb_HeII_rate_case_A(Real T, Real units)
 {
   Real T_ev    = T / 11605.0;
-  Real logT_ev = log(T_ev);
   if (T_ev > 0.8) {
     return (1.54e-9 * (1.0 + 0.3 / exp(8.099328789667 / T_ev)) / (exp(40.49664394833662 / T_ev) * pow(T_ev, 1.5)) +
             3.92e-13 / pow(T_ev, 0.6353)) /
@@ -774,7 +772,7 @@ __device__ Real recomb_HeII_rate_case_A(Real T, Real units)
   }
 }
 // k4_rate Case B
-__device__ Real recomb_HeII_rate_case_B(Real T, Real units)
+__host__ __device__ Real recomb_HeII_rate_case_B(Real T, Real units)
 {
   // If case B recombination on.
   return 1.26e-14 * pow(5.7067e5 / T, 0.75) / units;
@@ -782,7 +780,7 @@ __device__ Real recomb_HeII_rate_case_B(Real T, Real units)
 
 // Calculation of k2 (HII + e --> HI + photon)
 //  k2_rate
-__device__ Real recomb_HII_rate(Real T, Real units, bool use_case_B)
+__host__ __device__ Real recomb_HII_rate(Real T, Real units, bool use_case_B)
 {
   if (use_case_B) {
     if (T < 1.0e9) {
@@ -808,7 +806,7 @@ __device__ Real recomb_HII_rate(Real T, Real units, bool use_case_B)
   }
 }
 // k2_rate Case A
-__device__ Real recomb_HII_rate_case_A(Real T, Real units)
+__host__ __device__ Real recomb_HII_rate_case_A(Real T, Real units)
 {
   if (T > 5500) {
     // Convert temperature to appropriate form.
@@ -827,7 +825,7 @@ __device__ Real recomb_HII_rate_case_A(Real T, Real units)
 }
 
 // k2_rate Case B
-__device__ Real recomb_HII_rate_case_B(Real T, Real units)
+__host__ __device__ Real recomb_HII_rate_case_B(Real T, Real units)
 {
   if (T < 1.0e9) {
     auto ret = 4.881357e-6 * pow(T, -1.5) * pow((1.0 + 1.14813e2 * pow(T, -0.407)), -2.242);
@@ -837,11 +835,11 @@ __device__ Real recomb_HII_rate_case_B(Real T, Real units)
   }
 }
 
-__device__ Real recomb_HII_rate_case_Iliev1(Real T, Real units) { return 2.59e-13 / units; }
+__host__ __device__ Real recomb_HII_rate_case_Iliev1(Real T, Real units) { return 2.59e-13 / units; }
 
 // Calculation of k5 (HeII + e --> HeIII + 2e)
 //  k5_rate
-__device__ Real coll_i_HeII_rate(Real T, Real units)
+__host__ __device__ Real coll_i_HeII_rate(Real T, Real units)
 {
   Real T_ev    = T / 11605.0;
   Real logT_ev = log(T_ev);
@@ -861,7 +859,7 @@ __device__ Real coll_i_HeII_rate(Real T, Real units)
 
 // Calculation of k6 (HeIII + e --> HeII + photon)
 //  k6_rate
-__device__ Real recomb_HeIII_rate(Real T, Real units, bool use_case_B)
+__host__ __device__ Real recomb_HeIII_rate(Real T, Real units, bool use_case_B)
 {
   Real k6;
   // Has case B recombination setting.
@@ -877,7 +875,7 @@ __device__ Real recomb_HeIII_rate(Real T, Real units, bool use_case_B)
   return k6;
 }
 // k6_rate Case A
-__device__ Real recomb_HeIII_rate_case_A(Real T, Real units)
+__host__ __device__ Real recomb_HeIII_rate_case_A(Real T, Real units)
 {
   Real k6;
   // Has case B recombination setting.
@@ -885,7 +883,7 @@ __device__ Real recomb_HeIII_rate_case_A(Real T, Real units)
   return k6;
 }
 // k6_rate Case B
-__device__ Real recomb_HeIII_rate_case_B(Real T, Real units)
+__host__ __device__ Real recomb_HeIII_rate_case_B(Real T, Real units)
 {
   Real k6;
   // Has case B recombination setting.
@@ -899,7 +897,7 @@ __device__ Real recomb_HeIII_rate_case_B(Real T, Real units)
 
 // Calculation of k57 (HI + HI --> HII + HI + e)
 //  k57_rate
-__device__ Real coll_i_HI_HI_rate(Real T, Real units)
+__host__ __device__ Real coll_i_HI_HI_rate(Real T, Real units)
 {
   // These rate coefficients are from Lenzuni, Chernoff & Salpeter (1991).
   // k57 value based on experimental cross-sections from Gealy & van Zyl (1987).
@@ -912,7 +910,7 @@ __device__ Real coll_i_HI_HI_rate(Real T, Real units)
 
 // Calculation of k58 (HI + HeI --> HII + HeI + e)
 //  k58_rate
-__device__ Real coll_i_HI_HeI_rate(Real T, Real units)
+__host__ __device__ Real coll_i_HI_HeI_rate(Real T, Real units)
 {
   // These rate coefficients are from Lenzuni, Chernoff & Salpeter (1991).
   // k58 value based on cross-sections from van Zyl, Le & Amme (1981).

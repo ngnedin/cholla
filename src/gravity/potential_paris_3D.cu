@@ -101,7 +101,7 @@ void Potential_Paris_3D::Get_Potential(const Real *const density, Real *const po
 
   gpuFor(
       n, GPU_LAMBDA(const int i) { db[i] = scale * (db[i] - offset); });
-  pp_->solvePotential(minBytes_, db, da);
+  pp_->solve(minBytes_, db, da);
   gpuFor(
       nk, nj, ni, GPU_LAMBDA(const int k, const int j, const int i) {
         const int ia = i + ni * (j + nj * k);
