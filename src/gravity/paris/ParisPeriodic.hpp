@@ -41,7 +41,7 @@ class ParisPeriodic
    *                         Must be at least @ref bytes() bytes, likely larger
    * than the actual output field. }
    */
-  void solvePotential(size_t bytes, double *density, double *potential) const;
+  void solve(size_t bytes, double *density, double *potential) const;
   void solveEddingtonTensor(size_t bytes, double *source, double *tensor, int component) const;
 
  private:
