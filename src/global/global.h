@@ -113,6 +113,9 @@ typedef double Real;
   #endif                           // GRAVITY_5_POINTS_GRADIENT
 
 typedef long int grav_int_t;
+//Default Gravity Compiler Flags
+  #define GRAVITY_LONG_INTS
+  #define COUPLE_GRAVITATIONAL_WORK
 #endif
 
 #ifdef PARTICLES
@@ -283,8 +286,13 @@ struct parameters {
   Real Omega_b;
   Real Init_redshift;
   Real End_redshift;
+  Real Init_temperature;
   char scale_outputs_file[MAXLEN];  // File for the scale_factor output values
                                     // for cosmological simulations
+  char cosmo_ics_pk_file[MAXLEN];   // File for the power spectrum used to 
+                                    // generate cosmological initial conditions
+  int cosmo_ics_random_seed;
+
 #endif                              // COSMOLOGY
 #ifdef TILED_INITIAL_CONDITIONS
   Real tile_length;

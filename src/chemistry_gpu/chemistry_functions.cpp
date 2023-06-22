@@ -14,8 +14,7 @@
 void Grid3D::Initialize_Chemistry_Start(struct parameters *P)
 {
   Chem.recombination_case = 0; // set case A recombination
-
-  Chem.H.H_fraction = INITIAL_FRACTION_HI + INITIAL_FRACTION_HII
+  Chem.H.H_fraction = INITIAL_FRACTION_HI + INITIAL_FRACTION_HII; // initial H fraction = HI + HII
 }
 
 void Grid3D::Initialize_Chemistry_Finish(struct parameters *P)
@@ -150,7 +149,7 @@ void Chem_GPU::Initialize(struct parameters *P)
 
   Initialize_Reaction_Rates();
 
-  #ifndef RT #need to work out how to include this -- BRANT
+  #ifndef RT //need to work out how to include this -- BRANT
   Initialize_UVB_Ionization_and_Heating_Rates(P);
   #endif  // RT
 }
@@ -327,7 +326,7 @@ void Grid3D::Compute_Gas_Temperature(Real *temperature, bool convert_cosmo_units
 
 void Chem_GPU::Reset()
 {
-  #ifndef RT #need to work out how to include this -- BRANT
+  #ifndef RT //need to work out how to include this -- BRANT
   free(rates_z_h);
   free(Heat_rates_HI_h);
   free(Heat_rates_HeI_h);
