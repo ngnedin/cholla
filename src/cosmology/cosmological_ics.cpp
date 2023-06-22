@@ -387,7 +387,7 @@ void Grid3D::Generate_Cosmological_Initial_Conditions( struct parameters *P  ){
   #endif// NOT ONLY_PARTICLES
   
   // Change to comoving Cosmological System
-  Change_Cosmological_Frame_Sytem( true );
+  Change_Cosmological_Frame_System( true );
   
   // Reset everything
   free( displacements_x );
