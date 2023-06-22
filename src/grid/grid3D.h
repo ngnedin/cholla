@@ -850,6 +850,7 @@ class Grid3D
   void Advance_Particles_KDK_Cosmo_Step1_GPU();
   void Advance_Particles_KDK_Cosmo_Step2_GPU();
   #endif  // PARTICLES_GPU
+  void Generate_Cosmological_Initial_Conditions( struct parameters *P );
 #endif    // COSMOLOGY
 
 #ifdef COOLING_GRACKLE
