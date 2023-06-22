@@ -98,6 +98,15 @@ Real Cosmology::Get_Hubble_Parameter(Real a)
   return H0 * sqrt(factor);
 }
 
+Real Cosmology::Get_Hubble_Parameter_Full( Real a )
+{
+  Real a2 = a * a;
+  Real a3 = a2 * a;
+  Real a4 = a3 * a;
+  Real factor = ( Omega_R/a4 + Omega_M/a3 + Omega_K/a2 + Omega_L );
+  return H0 * sqrt(factor);
+}
+
 void Grid3D::Change_Cosmological_Frame_System(bool forward)
 {
   if (forward) {
