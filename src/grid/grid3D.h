@@ -901,6 +901,12 @@ class Grid3D
     #endif
   #endif  // LYA_STATISTICS
 #endif    // ANALYSIS
+
+
+  /*! \fn int Show_Units(void)
+   *  \brief Show the unit system used in this simulation. */
+  int Show_Units(void);
+
 };
 
 // typedef for Grid3D_PointerMemberFunction

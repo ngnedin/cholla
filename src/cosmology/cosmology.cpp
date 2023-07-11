@@ -44,7 +44,7 @@ void Cosmology::Initialize(struct parameters *P, Grav3D &Grav, Particles_3D &Par
 
   // Initialize Time and set the time conversion
   t_secs          = 0;
-  time_conversion = KPC;
+  time_conversion = KPC_MKS;
 
   // Set Normalization factors
   r_0_dm          = P->xlen / P->nx;

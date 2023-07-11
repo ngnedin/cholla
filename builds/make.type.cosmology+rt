@@ -11,7 +11,7 @@ DFLAGS += -DOUTPUT_RADIATION
 
 
 # Average Slow cell when the cell delta_t is very small
-#DFLAGS += -DAVERAGE_SLOW_CELLS
+DFLAGS += -DAVERAGE_SLOW_CELLS
 
 
 # Print Initial Statistics

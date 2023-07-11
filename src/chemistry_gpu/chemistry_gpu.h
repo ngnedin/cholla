@@ -30,10 +30,20 @@ struct Chemistry_Header {
   Real density_units;
   Real length_units;
   Real time_units;
+  Real dens_base;
+  Real length_base;
+  Real time_base;
   Real velocity_units;
   Real cooling_units;
   Real reaction_units;
   Real dens_number_conv;
+  Real eV_to_ergs;
+  Real heat_units;
+  Real ion_units;
+  //eV_to_ergs = 1.60218e-12;
+  // heat_units_old = eV_to_ergs / ChemHead.cooling_units;  /// NG 221127: this is incorrect
+  //   heat_units = eV_to_ergs * 1e-10 * ChemHead.time_units * ChemHead.density_units / MH / MH;
+  //     ion_units  = ChemHead.time_units;
 
   // Cosmological parameters
   Real H0;
@@ -130,7 +140,7 @@ class Chem_GPU
   float *Ion_rates_HeI_d;
   float *Ion_rates_HeII_d;
 
-  struct Chemistry_Header H;
+  struct Chemistry_Header ChemHead;
 
   struct Fields {
     Real *temperature_h;
@@ -158,6 +168,8 @@ class Chem_GPU
   void Copy_UVB_Rates_to_GPU();
 
   void Reset();
+
+  int chprintf_chemistry_units();
 
   #ifdef TEXTURES_UVB_INTERPOLATION
   void Bind_GPU_Textures(int size, float *H_HI_h, float *H_HeI_h, float *H_HeII_h, float *I_HI_h, float *I_HeI_h,

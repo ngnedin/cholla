@@ -8,6 +8,7 @@
   #include <vector>
 
   #include "../io/io.h"
+  #include "../utils/error_handling.h"
   #include "chemistry_gpu.h"
 
 using namespace std;
@@ -55,14 +56,26 @@ void Chem_GPU::Load_UVB_Ionization_and_Heating_Rates(struct parameters *P)
   Ion_rates_HeI_h   = (float *)malloc(sizeof(float) * n_lines);
   Ion_rates_HeII_h  = (float *)malloc(sizeof(float) * n_lines);
 
-  Real eV_to_ergs, heat_units, ion_units;
-  eV_to_ergs = 1.60218e-12;
-  // heat_units_old = eV_to_ergs / H.cooling_units;  /// NG 221127: this is incorrect
-  heat_units = eV_to_ergs * 1e-10 * H.time_units * H.density_units / MH / MH;
-  ion_units  = H.time_units;
+  //Real eV_to_ergs, heat_units, ion_units;
+  //Real heat_units, ion_units;
+  //eV_to_ergs = 1.60218e-12;
+  // heat_units_old = eV_to_ergs / ChemHead.cooling_units;  /// NG 221127: this is incorrect
+  //heat_units = eV_to_ergs * 1e-10 * ChemHead.time_units * ChemHead.density_units / MH / MH;
+  //heat_units = EV_CGS * 1e-10 * ChemHead.time_units * ChemHead.density_units / MH / MH;
+  //ion_units  = ChemHead.time_units;
 
+  //chprintf("ChemHead.cooling_units %10.9e\n",ChemHead.cooling_units);
+  //chprintf("heat_units %10.9e\n",heat_units);
+  //chprintf("ion_units  %10.9e\n",ion_units);
+  //chprintf("eV_to_ergs [electron volts in cgs] %10.9e ergs.\n",eV_to_ergs);
+
+  //chprintf_chemistry_units();
+  //chexit(0);
+
+  Real ion_units  = ChemHead.ion_units;
+  Real heat_units = ChemHead.heat_units;
   for (i = 0; i < n_lines; i++) {
-    rates_z_h[i]         = v[i][0];
+    rates_z_h[i]         = v[i][0]; //redshift
     Ion_rates_HI_h[i]    = v[i][1] * ion_units;
     Heat_rates_HI_h[i]   = v[i][2] * heat_units;
     Ion_rates_HeI_h[i]   = v[i][3] * ion_units;
@@ -87,6 +100,69 @@ void Chem_GPU::Load_UVB_Ionization_and_Heating_Rates(struct parameters *P)
   chprintf("  N redshift values: %d \n", n_uvb_rates_samples);
   chprintf("  z_min = %f    z_max = %f \n", rates_z_h[0], rates_z_h[n_uvb_rates_samples - 1]);
   chprintf("  UVB on:  a=%f \n", scale_factor_UVB_on);
+
+  //BRANT print chemistry units
+  //chprintf_chemistry_units();
+  //chexit(0);
+}
+
+int Chem_GPU::chprintf_chemistry_units( void )
+{
+  int code;
+
+  code = chprintf("********\n\n");
+  code = chprintf("Chemistry Header time_units          %10.9e.\n",ChemHead.time_units);
+  code = chprintf("Chemistry Header length_units        %10.9e.\n",ChemHead.length_units);
+  code = chprintf("Chemistry Header density_units       %10.9e.\n",ChemHead.density_units);
+  code = chprintf("Chemistry Header time_base           %10.9e.\n",ChemHead.time_base);
+  code = chprintf("Chemistry Header length_base         %10.9e.\n",ChemHead.length_base);
+  code = chprintf("Chemistry Header dens_base           %10.9e.\n",ChemHead.dens_base);
+  code = chprintf("Chemistry Header dens_number_conv    %10.9e.\n",ChemHead.dens_number_conv);
+  code = chprintf("Chemistry Header cooling_units       %10.9e.\n",ChemHead.cooling_units);
+  code = chprintf("Chemistry Header reaction_units      %10.9e.\n",ChemHead.reaction_units);
+  code = chprintf("Chemistry Header heat_units          %10.9e.\n",ChemHead.heat_units);
+  code = chprintf("Chemistry Header ion_units           %10.9e.\n",ChemHead.ion_units);
+  code = chprintf("Chemistry Header eV_to_ergs          %10.9e [electron volts in cgs].\n",ChemHead.eV_to_ergs);
+  code = chprintf("Chemistry Header density_conversion  %10.9e.\n",ChemHead.density_conversion);
+  code = chprintf("Chemistry Header energy_conversion   %10.9e.\n",ChemHead.energy_conversion);
+#ifdef RT
+  code = chprintf("Chemistry Header unitPhotoHeating    %10.9e.\n",ChemHead.unitPhotoHeating);
+  code = chprintf("Chemistry Header unitPhotoIonization %10.9e.\n",ChemHead.unitPhotoIonization);
+#endif //RT
+#ifdef COSMOLOGY
+  code = chprintf("Chemistry Header a_value             %10.9e.\n",ChemHead.a_value);
+  code = chprintf("Chemistry Header H0                  %10.9e.\n",ChemHead.H0);
+  code = chprintf("Chemistry Header Omega_M             %10.9e.\n",ChemHead.Omega_M);
+  code = chprintf("Chemistry Header Omega_L             %10.9e.\n",ChemHead.Omega_L);
+#endif //COSMOLOGY
+
+
+/* RT photo ionization rates
+    photo_i_HI   = pRates[0] * Chem_H.unitPhotoIonization;
+    photo_h_HI   = pRates[1] * Chem_H.unitPhotoHeating;
+    photo_i_HeI  = pRates[2] * Chem_H.unitPhotoIonization;
+    photo_h_HeI  = pRates[3] * Chem_H.unitPhotoHeating;
+    photo_i_HeII = pRates[4] * Chem_H.unitPhotoIonization;
+    photo_h_HeII = pRates[5] * Chem_H.unitPhotoHeating;
+*/
+
+/*
+  Non RT photoionization rates
+    photo_i_HI   = linear_interpolation(delta_x, indx_l, indx_l + 1, Chem_H.photo_ion_HI_rate_d);
+    photo_i_HeI  = linear_interpolation(delta_x, indx_l, indx_l + 1, Chem_H.photo_ion_HeI_rate_d);
+    photo_i_HeII = linear_interpolation(delta_x, indx_l, indx_l + 1, Chem_H.photo_ion_HeII_rate_d);
+    photo_h_HI   = linear_interpolation(delta_x, indx_l, indx_l + 1, Chem_H.photo_heat_HI_rate_d);
+    photo_h_HeI  = linear_interpolation(delta_x, indx_l, indx_l + 1, Chem_H.photo_heat_HeI_rate_d);
+    photo_h_HeII = linear_interpolation(delta_x, indx_l, indx_l + 1, Chem_H.photo_heat_HeII_rate_d);
+*/
+
+  //chprintf("ChemHead.cooling_units %10.9e\n",ChemHead.cooling_units);
+  //  //chprintf("heat_units %10.9e\n",heat_units);
+  //    //chprintf("ion_units  %10.9e\n",ion_units);
+  //      //chprintf("eV_to_ergs [electron volts in cgs] %10.9e ergs.\n",eV_to_ergs);
+  code = chprintf("\n********\n");
+
+  return code;
 }
 
 #endif

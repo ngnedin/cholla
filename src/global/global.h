@@ -30,14 +30,6 @@ typedef double Real;
 #define GN  4.49451e-18  // gravitational constant, kpc^3 / M_sun / kyr^2
 #define C_L 0.306594593  // speed of light in kpc/kyr
 
-#define MYR      31.536e12         // Myears in secs
-#define KPC      3.086e16          // kpc in km
-#define G_COSMO  4.300927161e-06;  // gravitational constant, kpc km^2 s^-2 Msun^-1
-#define MSUN_CGS 1.98847e33;       // Msun in gr
-#define KPC_CGS  3.086e21;         // kpc in cm
-#define KM_CGS   1e5;              // km in cm
-#define MH       1.67262171e-24    // Mass of hydrogen [g]
-
 #define TIME_UNIT   3.15569e10     // 1 kyr in s
 #define LENGTH_UNIT 3.08567758e21  // 1 kpc in cm
 #define MASS_UNIT   1.98847e33     // 1 solar mass in grams
@@ -54,6 +46,23 @@ typedef double Real;
 #ifndef M_PI
   #define M_PI 3.141592653589793238462643383279
 #endif
+
+//COSMOLOGY
+//#define MYR      31.536e12            // Myears in secs
+#define KM_CGS   1e5                    // km in cm
+#define MYR      (TIME_UNIT * 1.e3)     //Myears in secs
+//#define KPC      3.086e16             // kpc in km
+#define KPC_MKS  (LENGTH_UNIT / KM_CGS) //kpc in km
+//#define G_COSMO  4.300927161e-06   // gravitational constant, kpc km^2 s^-2 Msun^-1
+#define G_COSMO  (GN * (KM_CGS/VELOCITY_UNIT)*(KM_CGS/VELOCITY_UNIT))   // gravitational constant, kpc km^2 s^-2 Msun^-1
+//#define MSUN_CGS 1.98847e33        // Msun in gr
+//#define KPC_CGS  3.086e21          // kpc in cm
+#define MSUN_CGS MASS_UNIT           // Msun in gr
+#define KPC_CGS  LENGTH_UNIT         // kpc in cm
+#define MH       1.67262171e-24    // Mass of hydrogen [g]
+#define EV_CGS   1.602176634e-12   // eV in ergs
+
+
 
 #define LOG_FILE_NAME "run_output.log"
 

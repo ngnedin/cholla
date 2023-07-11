@@ -487,8 +487,10 @@ __global__ void Update_Chemistry_kernel(Real *dev_conserved, const Real *dev_rf,
   Real GE, E_kin, dt_chem, t_chem;
   Real current_a, a3, a2;
 
+
+  // unit conversion
   Real density_conv, energy_conv;
-  density_conv = Chem_H.density_conversion;
+  density_conv = Chem_H.density_conversion; //
   energy_conv  = Chem_H.energy_conversion;
 
   Real U_dot, HI_dot, e_dot, HI_dot_prev, e_dot_prev, temp_prev;
@@ -527,15 +529,23 @@ __global__ void Update_Chemistry_kernel(Real *dev_conserved, const Real *dev_rf,
     }
 
     // Convert to cgs units
+    current_a = 1;
+    a2 = 1;
+    a3 = 1;
+
+  //BRANT
+  #ifdef COSMOLOGY
     current_a = 1 / (Chem_H.current_z + 1);
     a2        = current_a * current_a;
     a3        = a2 * current_a;
+  #endif // COSMOLOGY
+
     d *= density_conv / a3;
     GE *= energy_conv / a2;
     // dt_hydro = dt_hydro / Chem_H.time_units; NG 221126: this is a bug, integration is in code units
 
   #ifdef COSMOLOGY
-    dt_hydro *= current_a * current_a / Chem_H.H0 * 1000 * KPC;
+    dt_hydro *= current_a * current_a / Chem_H.H0 * 1000 * KPC_MKS;
   #endif  // COSMOLOGY
           // dt_hydro = dt_hydro * current_a * current_a / Chem_H.H0 * 1000 * KPC / Chem_H.time_units;
           //  delta_a = Chem_H.H0 * sqrt( Chem_H.Omega_M/current_a + Chem_H.Omega_L*pow(current_a, 2) ) / (

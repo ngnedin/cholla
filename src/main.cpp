@@ -104,6 +104,7 @@ int main(int argc, char *argv[])
   message = "Initializing Simulation";
   Write_Message_To_Log_File(message.c_str());
 
+
 #ifdef CHEMISTRY_GPU
   G.Initialize_Chemistry_Start(&P);
 #endif
@@ -121,6 +122,7 @@ int main(int argc, char *argv[])
     outtime += G.H.t;
     nfile = P.nfile;
   }
+
 
 #ifdef RT
   G.Rad.Initialize_Finish();
@@ -182,6 +184,14 @@ int main(int argc, char *argv[])
 #ifdef GRAVITY_ANALYTIC_COMP
   G.Setup_Analytic_Potential(&P);
 #endif
+
+
+
+  //record what unit system was used
+  G.Show_Units();
+
+  //chexit(0);
+
 
 #ifdef GRAVITY
   // Get the gravitational potential for the first timestep
@@ -252,6 +262,8 @@ int main(int argc, char *argv[])
   if (P.max_timestep != 0) {
     dt_max = P.max_timestep;
   }
+
+// main integration loop
 
   while (G.H.t < P.tout) {
 // get the start time

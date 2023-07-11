@@ -54,9 +54,9 @@ void Cool_GK::Initialize(struct parameters *P, Cosmology &Cosmo)
   units.comoving_coordinates = 1;    // 1 if cosmological sim, 0 if not
   units.a_units              = 1.0;  // units for the expansion factor
   units.a_value              = Cosmo.current_a / units.a_units;
-  units.density_units        = dens_to_CGS / Cosmo.current_a / Cosmo.current_a / Cosmo.current_a;
+  units.density_units        = dens_to_CGS / Cosmo.current_a / Cosmo.current_a / Cosmo.current_a; //BRANT -- factors of h are above
   units.length_units         = kpc / Cosmo.cosmo_h * Cosmo.current_a;
-  units.time_units           = KPC / Cosmo.cosmo_h;
+  units.time_units           = KPC / Cosmo.cosmo_h; //BRANT -- is this a bug?
   units.velocity_units       = units.length_units / Cosmo.current_a / units.time_units;  // since u = a * dx/dt
 
   // Second, create a chemistry object for parameters.  This needs to be a

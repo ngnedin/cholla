@@ -3384,6 +3384,7 @@ int chprintf(const char *__restrict sdata, ...)
   return code;
 }
 
+
 void rotate_point(Real x, Real y, Real z, Real delta, Real phi, Real theta, Real *xp, Real *yp, Real *zp)
 {
   Real cd, sd, cp, sp, ct, st;  // sines and cosines
