@@ -58,8 +58,10 @@ void Grid3D::Initialize_Chemistry_Finish(struct parameters *P)
 
 
   // These are conversions from code units to cgs. Following Grackle
-  Chem.ChemHead.density_units    = dens_to_CGS;
-  Chem.ChemHead.length_units     = kpc_cgs;
+  //Chem.ChemHead.density_units    = dens_to_CGS;
+  Chem.ChemHead.density_units    = DENSITY_UNIT;
+  //Chem.ChemHead.length_units     = kpc_cgs;
+  Chem.ChemHead.length_units     = LENGTH_UNIT;
   Chem.ChemHead.time_units       = TIME_UNIT;
   //Chem.ChemHead.time_units       = KPC_MKS/Cosmo.cosmo_h;
   Chem.ChemHead.dens_number_conv = Chem.ChemHead.density_units / MH;
@@ -91,25 +93,27 @@ void Grid3D::Initialize_Chemistry_Finish(struct parameters *P)
   #endif  // COSMOLOGY
   Chem.ChemHead.velocity_units = Chem.ChemHead.length_units / Chem.ChemHead.time_units;
 
+  #ifdef COSMOLOGY
   Real dens_base, length_base, time_base;
   dens_base   = Chem.ChemHead.density_units;
   length_base = Chem.ChemHead.length_units;
-  #ifdef COSMOLOGY
   dens_base   = dens_base * Chem.ChemHead.a_value * Chem.ChemHead.a_value * Chem.ChemHead.a_value;
   length_base = length_base / Chem.ChemHead.a_value;
+  time_base = Chem.ChemHead.time_units;
   #endif  // COSMOLOGY
 
-  time_base = Chem.ChemHead.time_units;
 
   //BRANT
-  Chem.ChemHead.dens_base   = dens_base;
-  Chem.ChemHead.length_base = length_base;
-  Chem.ChemHead.time_base   = time_base;
+  //Chem.ChemHead.dens_base   = dens_base;
+  //Chem.ChemHead.length_base = length_base;
+  //Chem.ChemHead.time_base   = time_base;
 
   /// Chem.ChemHead.cooling_units   = ( pow(length_base, 2) * pow(MH, 2) ) / ( dens_base * pow(time_base, 3) ); NG 221127 -
   /// this is incorrect
-  Chem.ChemHead.cooling_units  = 1.0e10 * MH * MH / (dens_base * time_base);  // NG 221127 - fixed
-  Chem.ChemHead.reaction_units = MH / (dens_base * time_base);
+  //Chem.ChemHead.cooling_units  = 1.0e10 * MH * MH / (dens_base * time_base);  // NG 221127 - fixed
+  //Chem.ChemHead.reaction_units = MH / (dens_base * time_base);
+  Chem.ChemHead.reaction_units = MH / (Chem.ChemHead.density_units * Chem.ChemHead.time_units);
+  Chem.ChemHead.cooling_units  = 1.0e10 * MH * Chem.ChemHead.reaction_units;
   // printf(" cooling_units: %e\n", Chem.ChemHead.cooling_units );
   // printf(" reaction_units: %e\n", Chem.ChemHead.reaction_units );
   //
@@ -119,8 +123,12 @@ void Grid3D::Initialize_Chemistry_Finish(struct parameters *P)
 
   //BRANT
   Chem.ChemHead.ion_units  = Chem.ChemHead.time_units;
-  Chem.ChemHead.eV_to_ergs = 1.6021766339999e-12;  //eV in ergs
-  Chem.ChemHead.heat_units = Chem.ChemHead.eV_to_ergs * 1.0e-10 * Chem.ChemHead.time_units * Chem.ChemHead.density_units / MH / MH;
+  Chem.ChemHead.eV_to_ergs = EV_CGS;                                                 //eV in ergs
+  Chem.ChemHead.heat_units = Chem.ChemHead.eV_to_ergs / Chem.ChemHead.cooling_units;
+
+  //chprintf("ion_units %e\n",Chem.ChemHead.ion_units);
+  //chexit(0);
+  //Chem.ChemHead.heat_units = Chem.ChemHead.eV_to_ergs * 1.0e-10 * Chem.ChemHead.time_units * Chem.ChemHead.density_units / MH / MH;
   //    // heat_units_old = eV_to_ergs / ChemHead.cooling_units;  /// NG 221127: this is incorrect
   //      heat_units = eV_to_ergs * 1e-10 * ChemHead.time_units * ChemHead.density_units / MH / MH;
   //        //heat_units = EV_CGS * 1e-10 * ChemHead.time_units * ChemHead.density_units / MH / MH;
@@ -139,8 +147,6 @@ void Grid3D::Initialize_Chemistry_Finish(struct parameters *P)
 
   Chem.ChemHead.max_iter = 10000;
 
-  chprintf("dens_to_CGS %e density_units%e\n",dens_to_CGS,Chem.ChemHead.density_units);
-  //chexit(0);
   // Initialize all the rates
   Chem.Initialize(P);
 
@@ -150,8 +156,10 @@ void Grid3D::Initialize_Chemistry_Finish(struct parameters *P)
   Chem.ChemHead.density_conversion = Cosmo.rho_0_gas * Cosmo.cosmo_h * Cosmo.cosmo_h / pow(kpc_cgs, 3) * Msun_cgs;
   Chem.ChemHead.energy_conversion  = Cosmo.v_0_gas * Cosmo.v_0_gas * 1e10;  // km^2 -> cm^2 ;
   #else                                                              // Not COSMOLOGY
-  Chem.ChemHead.density_conversion = DENSITY_UNIT;
-  Chem.ChemHead.energy_conversion  = ENERGY_UNIT / DENSITY_UNIT;  // NG: this is energy per unit mass
+  //Chem.ChemHead.density_conversion = DENSITY_UNIT;
+  //Chem.ChemHead.energy_conversion  = ENERGY_UNIT / DENSITY_UNIT;  // NG: this is energy per unit mass
+  Chem.ChemHead.density_units = DENSITY_UNIT;
+  Chem.ChemHead.energy_units  = ENERGY_UNIT;
   #endif
   Chem.ChemHead.n_uvb_rates_samples    = Chem.n_uvb_rates_samples;
   Chem.ChemHead.uvb_rates_redshift_d   = Chem.rates_z_d;

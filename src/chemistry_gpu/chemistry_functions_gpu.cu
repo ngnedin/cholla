@@ -490,8 +490,12 @@ __global__ void Update_Chemistry_kernel(Real *dev_conserved, const Real *dev_rf,
 
   // unit conversion
   Real density_conv, energy_conv;
-  density_conv = Chem_H.density_conversion; //
-  energy_conv  = Chem_H.energy_conversion;
+  //density_conv = Chem_H.density_conversion; //
+  //energy_conv  = Chem_H.energy_conversion;
+
+  //BRANT changed this to avoid excess variable definitions
+  density_conv = Chem_H.density_units;
+  energy_conv  = Chem_H.energy_units / Chem_H.density_units; //energy per unit mass
 
   Real U_dot, HI_dot, e_dot, HI_dot_prev, e_dot_prev, temp_prev;
   Real k_coll_i_HI, k_coll_i_HeI, k_coll_i_HeII, k_coll_i_HI_HI, k_coll_i_HI_HeI;

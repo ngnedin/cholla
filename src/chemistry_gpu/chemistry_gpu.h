@@ -19,8 +19,8 @@ class Grid3D;
 
 struct Chemistry_Header {
   Real gamma;
-  Real density_conversion;
-  Real energy_conversion;
+  //Real density_conversion;
+  //Real energy_conversion;
   Real current_z;
   Real runtime_chemistry_step;
   Real H_fraction;
@@ -28,11 +28,12 @@ struct Chemistry_Header {
   // Units system
   Real a_value;
   Real density_units;
+  Real energy_units;
   Real length_units;
   Real time_units;
-  Real dens_base;
-  Real length_base;
-  Real time_base;
+  //Real dens_base;
+  //Real length_base;
+  //Real time_base;
   Real velocity_units;
   Real cooling_units;
   Real reaction_units;

@@ -62,8 +62,6 @@ typedef double Real;
 #define MH       1.67262171e-24    // Mass of hydrogen [g]
 #define EV_CGS   1.602176634e-12   // eV in ergs
 
-
-
 #define LOG_FILE_NAME "run_output.log"
 
 // Conserved Floor Values
