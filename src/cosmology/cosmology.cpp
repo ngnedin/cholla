@@ -44,17 +44,19 @@ void Cosmology::Initialize(struct parameters *P, Grav3D &Grav, Particles_3D &Par
 
   // Initialize Time and set the time conversion
   t_secs          = 0;
-  time_conversion = KPC_MKS;
+  time_conversion = KPC_KM;
 
   // Set Normalization factors
   r_0_dm          = P->xlen / P->nx;
-  t_0_dm          = 1. / H0;
-  v_0_dm          = r_0_dm / t_0_dm / cosmo_h;
+  //t_0_dm          = 1. / H0;
+  t_0_dm          = 1. / H0 * cosmo_h;
+  //v_0_dm          = r_0_dm / t_0_dm / cosmo_h;
+  v_0_dm          = r_0_dm / t_0_dm; 
   rho_0_dm        = 3 * H0 * H0 / (8 * M_PI * cosmo_G) * Omega_M / cosmo_h / cosmo_h;
   rho_mean_baryon = 3 * H0 * H0 / (8 * M_PI * cosmo_G) * Omega_b / cosmo_h / cosmo_h;
   // dens_avrg = 0;
 
-  r_0_gas   = 1.0;
+  r_0_gas   = 1.0; //kpc/h
   rho_0_gas = 3 * H0 * H0 / (8 * M_PI * cosmo_G) * Omega_M / cosmo_h / cosmo_h;
   t_0_gas   = 1 / H0 * cosmo_h;
   v_0_gas   = r_0_gas / t_0_gas;
@@ -68,8 +70,13 @@ void Cosmology::Initialize(struct parameters *P, Grav3D &Grav, Particles_3D &Par
   chprintf(" Omega_b: %f\n", Omega_b);
   chprintf(" Current_a: %f\n", current_a);
   chprintf(" Current_z: %f\n", current_z);
-  chprintf(" rho_0: %f\n", rho_0_gas);
-  chprintf(" v_0: %f \n", v_0_gas);
+  chprintf(" rho_0_gas: %e\n", rho_0_gas);
+  chprintf(" r_0_gas: %e \n", r_0_gas);
+  chprintf(" t_0_gas: %e \n", t_0_gas);
+  chprintf(" v_0_gas: %e \n", v_0_gas);
+  chprintf(" phi_0_gas: %e \n", phi_0_gas);
+  chprintf(" p_0_gas: %e \n", p_0_gas);
+  chprintf(" e_0_gas: %e \n", e_0_gas);
   chprintf(" Max delta_a: %f \n", MAX_DELTA_A);
 
   Set_Scale_Outputs(P);

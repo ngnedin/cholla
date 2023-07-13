@@ -34,7 +34,7 @@ Real Cosmology::Get_Current_Time( Real a_end ){
     else integral += 4 * Time_Integrand(a);
   }
   integral *= delta_a / 3;
-  return integral * KPC_MKS;
+  return integral * KPC_KM;
 }
 
 

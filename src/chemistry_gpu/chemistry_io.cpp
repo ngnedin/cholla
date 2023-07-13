@@ -113,19 +113,17 @@ int Chem_GPU::chprintf_chemistry_units( void )
   code = chprintf("********\n\n");
   code = chprintf("Chemistry Header time_units          %10.9e [same as TIME_UNIT].\n",ChemHead.time_units);
   code = chprintf("Chemistry Header length_units        %10.9e [same as LENGTH_UNIT].\n",ChemHead.length_units);
+  code = chprintf("Chemistry Header velocity_units      %10.9e [length_units/time_units].\n",ChemHead.velocity_units);
   code = chprintf("Chemistry Header density_units       %10.9e [same as DENSITY_UNIT].\n",ChemHead.density_units);
   code = chprintf("Chemistry Header energy_units        %10.9e [same as ENERGY_UNIT].\n",ChemHead.energy_units);
-  //code = chprintf("Chemistry Header time_base           %10.9e [same as TIME_UNIT].\n",ChemHead.time_base);
-  //code = chprintf("Chemistry Header length_base         %10.9e [same as LENGTH_UNIT].\n",ChemHead.length_base);
-  //code = chprintf("Chemistry Header dens_base           %10.9e [same as DENSITY_UNIT].\n",ChemHead.dens_base);
+  code = chprintf("Chemistry Header energy_conversion   %10.9e [v_0_gas**2 * 1e10].\n",ChemHead.energy_conversion);
+  code = chprintf("Chemistry Header density_conversion  %10.9e [rho_0_gas h^2 / kpc^3 * Msun_cgs].\n",ChemHead.density_conversion);
   code = chprintf("Chemistry Header dens_number_conv    %10.9e [density_units/MH].\n",ChemHead.dens_number_conv);
   code = chprintf("Chemistry Header reaction_units      %10.9e [MH / (DENSITY_UNIT * TIME_UNIT)].\n",ChemHead.reaction_units);
   code = chprintf("Chemistry Header cooling_units       %10.9e [1e10 * MH * reaction_units].\n",ChemHead.cooling_units);
   code = chprintf("Chemistry Header heat_units          %10.9e [eV_to_ergs / cooling_units].\n",ChemHead.heat_units);
   code = chprintf("Chemistry Header ion_units           %10.9e [same as TIME_UNIT].\n",ChemHead.ion_units);
   code = chprintf("Chemistry Header eV_to_ergs          %10.9e [electron volts in cgs].\n",ChemHead.eV_to_ergs);
-  //code = chprintf("Chemistry Header density_conversion  %10.9e [DENSITY_UNIT].\n",ChemHead.density_conversion);
-  //code = chprintf("Chemistry Header energy_conversion   %10.9e [ENERGY_UNIT/DENSITY_UNIT].\n",ChemHead.energy_conversion);
 #ifdef RT
   code = chprintf("Chemistry Header unitPhotoHeating    %10.9e [kb * 1e-10 *time_units*density_units/MH/MH].\n",ChemHead.unitPhotoHeating);
   code = chprintf("Chemistry Header unitPhotoIonization %10.9e [same as TIME_UNIT].\n",ChemHead.unitPhotoIonization);

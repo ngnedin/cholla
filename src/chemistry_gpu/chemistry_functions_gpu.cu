@@ -490,12 +490,12 @@ __global__ void Update_Chemistry_kernel(Real *dev_conserved, const Real *dev_rf,
 
   // unit conversion
   Real density_conv, energy_conv;
-  //density_conv = Chem_H.density_conversion; //
-  //energy_conv  = Chem_H.energy_conversion;
+  density_conv = Chem_H.density_conversion;
+  energy_conv  = Chem_H.energy_conversion;
 
-  //BRANT changed this to avoid excess variable definitions
-  density_conv = Chem_H.density_units;
-  energy_conv  = Chem_H.energy_units / Chem_H.density_units; //energy per unit mass
+  //BRANT may be able to change this to limit the number of variables
+  //density_conv = Chem_H.density_units;
+  //energy_conv  = Chem_H.energy_units / Chem_H.density_units; //energy per unit mass
 
   Real U_dot, HI_dot, e_dot, HI_dot_prev, e_dot_prev, temp_prev;
   Real k_coll_i_HI, k_coll_i_HeI, k_coll_i_HeII, k_coll_i_HI_HI, k_coll_i_HI_HeI;
@@ -544,12 +544,12 @@ __global__ void Update_Chemistry_kernel(Real *dev_conserved, const Real *dev_rf,
     a3        = a2 * current_a;
   #endif // COSMOLOGY
 
-    d *= density_conv / a3;
+    d  *= density_conv / a3;
     GE *= energy_conv / a2;
     // dt_hydro = dt_hydro / Chem_H.time_units; NG 221126: this is a bug, integration is in code units
 
   #ifdef COSMOLOGY
-    dt_hydro *= current_a * current_a / Chem_H.H0 * 1000 * KPC_MKS;
+    dt_hydro *= current_a * current_a / Chem_H.H0 * 1000 * KPC_KM;
   #endif  // COSMOLOGY
           // dt_hydro = dt_hydro * current_a * current_a / Chem_H.H0 * 1000 * KPC / Chem_H.time_units;
           //  delta_a = Chem_H.H0 * sqrt( Chem_H.Omega_M/current_a + Chem_H.Omega_L*pow(current_a, 2) ) / (
@@ -655,7 +655,8 @@ __global__ void Update_Chemistry_kernel(Real *dev_conserved, const Real *dev_rf,
     // dev_conserved[10*n_cells + id] = TS.d_e     * a3; NG 221127: removed, no need to advect electrons, they are a
     // derived field
     d                               = d / density_conv * a3;
-    GE                              = TS.U / d_inv / energy_conv * a2 / 1e-10;
+    //GE                              = TS.U / d_inv / energy_conv * a2 / 1e-10;
+    GE                              = TS.U / d_inv / energy_conv * a2 / 1e-10; //REPLACE 1e-10 here?
     dev_conserved[4 * n_cells + id] = GE + E_kin;
   #ifdef DE
     dev_conserved[(n_fields - 1) * n_cells + id] = GE;

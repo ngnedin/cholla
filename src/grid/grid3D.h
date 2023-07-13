@@ -903,9 +903,9 @@ class Grid3D
 #endif    // ANALYSIS
 
 
-  /*! \fn int Show_Units(void)
+  /*! \fn int Show_Units(struct parameters *P)
    *  \brief Show the unit system used in this simulation. */
-  int Show_Units(void);
+  int Show_Units(struct parameters *P);
 
 };
 

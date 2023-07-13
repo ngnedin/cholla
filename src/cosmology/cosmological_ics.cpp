@@ -112,9 +112,9 @@ void Grid3D::Generate_Cosmological_Initial_Conditions( struct parameters *P  ){
         positions_y[indx] = H.yblocal + ( indx_j + 0.5 ) * H.dy + D * displacements_y[indx];
         positions_z[indx] = H.zblocal + ( indx_k + 0.5 ) * H.dz + D * displacements_z[indx];
   
-        velocities_x[indx] = Cosmo.current_a * D_dot * displacements_x[indx] * KPC_MKS / Cosmo.cosmo_h; // km /s
-        velocities_y[indx] = Cosmo.current_a * D_dot * displacements_y[indx] * KPC_MKS  / Cosmo.cosmo_h; // km /s
-        velocities_z[indx] = Cosmo.current_a * D_dot * displacements_z[indx] * KPC_MKS  / Cosmo.cosmo_h; // km /s
+        velocities_x[indx] = Cosmo.current_a * D_dot * displacements_x[indx] * KPC_KM / Cosmo.cosmo_h; // km /s
+        velocities_y[indx] = Cosmo.current_a * D_dot * displacements_y[indx] * KPC_KM  / Cosmo.cosmo_h; // km /s
+        velocities_z[indx] = Cosmo.current_a * D_dot * displacements_z[indx] * KPC_KM  / Cosmo.cosmo_h; // km /s
         
         dx_min = fmin( dx_min, D * displacements_x[indx] );
         dy_min = fmin( dy_min, D * displacements_y[indx] );
@@ -269,9 +269,9 @@ void Grid3D::Generate_Cosmological_Initial_Conditions( struct parameters *P  ){
         indx = indx_i + indx_j*Cosmo.ICs.nx_local + indx_k*Cosmo.ICs.nx_local*Cosmo.ICs.ny_local;
   
         density[indx] = Cosmo.rho_mean_baryon * ( 1 + Cosmo.ICs.rescaled_random_fluctiations_gas[indx] );
-        momentum_x[indx] = density[indx] * Cosmo.current_a * D_dot * displacements_x[indx] * KPC_MKS / Cosmo.cosmo_h;
-        momentum_y[indx] = density[indx] * Cosmo.current_a * D_dot * displacements_y[indx] * KPC_MKS / Cosmo.cosmo_h;
-        momentum_z[indx] = density[indx] * Cosmo.current_a * D_dot * displacements_z[indx] * KPC_MKS / Cosmo.cosmo_h;
+        momentum_x[indx] = density[indx] * Cosmo.current_a * D_dot * displacements_x[indx] * KPC_KM / Cosmo.cosmo_h;
+        momentum_y[indx] = density[indx] * Cosmo.current_a * D_dot * displacements_y[indx] * KPC_KM / Cosmo.cosmo_h;
+        momentum_z[indx] = density[indx] * Cosmo.current_a * D_dot * displacements_z[indx] * KPC_KM / Cosmo.cosmo_h;
         GasEnergy[indx] = density[indx] * initial_temp / ( gama - 1 ) / MP * KB / 1e10 / mmw;
         Energy[indx] = GasEnergy[indx] + 0.5 * ( momentum_x[indx]*momentum_x[indx] + momentum_y[indx]*momentum_y[indx] + momentum_z[indx]*momentum_z[indx]  ) / density[indx];
   

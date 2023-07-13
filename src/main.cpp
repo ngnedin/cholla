@@ -188,9 +188,9 @@ int main(int argc, char *argv[])
 
 
   //record what unit system was used
-  G.Show_Units();
+  G.Show_Units(&P);
 
-  //chexit(0);
+  chexit(0);
 
 
 #ifdef GRAVITY
