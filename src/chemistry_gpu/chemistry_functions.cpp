@@ -57,25 +57,60 @@ void Grid3D::Initialize_Chemistry_Finish(struct parameters *P)
   //chprintf("dens_to_CGS %e DENSITY_UNIT %e\n",dens_to_CGS,DENSITY_UNIT);
 
 
+  //density units are solar masses per kpc^3 in grams/cm^3
   Chem.ChemHead.density_units    = DENSITY_UNIT;
+
+  //length units are kpc in cm
   Chem.ChemHead.length_units     = LENGTH_UNIT;
+
+  //time units are kyr in s
   Chem.ChemHead.time_units       = TIME_UNIT;
+
+  //dens_number_conv is number of hydrogen atoms per cm^3
+  //for a density of 1 solar masses per kpc^3
   Chem.ChemHead.dens_number_conv = Chem.ChemHead.density_units / MH;
-  Chem.ChemHead.reaction_units   = MH / (Chem.ChemHead.density_units * Chem.ChemHead.time_units);
+  //Chem.ChemHead.reaction_units   = MH / (Chem.ChemHead.density_units * Chem.ChemHead.time_units);
+  
 
   //set cosmology chemistry unit system if needed
   #ifdef COSMOLOGY
+
+  //scale factor
   Chem.ChemHead.a_value          = Cosmo.current_a;
+
+  //note Chemistry Header H0 is in km/s/Mpc
   Chem.ChemHead.H0               = P->H0;
+
+  //fractional matter density
   Chem.ChemHead.Omega_M          = P->Omega_M;
+
+  //fractional dark energy density
   Chem.ChemHead.Omega_L          = P->Omega_L;
 
 #define BRUNO_CHEM_UNITS
+//
+#ifdef BRUNO_CHEM_UNITS
+  printf("BRUNO_CHEM_UNITS active\n");
+#else
+  printf("BRUNO_CHEM_UNITS not active\n");
+#endif //BRUNO_CHEM_UNITS
 
 #ifdef  BRUNO_CHEM_UNITS
+
+  //rho_0_gas*h^2/a^3 is the physical baryon density at scale factor a in Msun/kpc^3
+  //density_units is then physical baryon density in g/cm^3
+
   Chem.ChemHead.density_units    *= Cosmo.rho_0_gas*pow(Cosmo.cosmo_h,2)/pow(Chem.ChemHead.a_value,3); //physical
+
+
+  //1 physical kpc in cm
   Chem.ChemHead.length_units     *= Chem.ChemHead.a_value/Cosmo.cosmo_h; //LENGTH_UNITS in physical cm
-  Chem.ChemHead.time_units       *= (KPC_KM/Cosmo.cosmo_h)/TIME_UNIT; //WTH
+
+  //this time unit converts between Hubble parameter in
+  //km/s/kpc to 1/s
+  Chem.ChemHead.time_units       *= (KPC_KM/Cosmo.cosmo_h)/TIME_UNIT; //WTH -- convert Hubble from km/s/kpc to 1/s?
+
+  //converts 
   Chem.ChemHead.dens_number_conv *= Cosmo.rho_0_gas*pow(Cosmo.cosmo_h,2); //comoving, incl h
   //Real dens_base, length_base, time_base;
   //dens_base   = Chem.ChemHead.density_units * pow(Chem.ChemHead.a_value,3); //comoving incl h?
@@ -92,7 +127,14 @@ void Grid3D::Initialize_Chemistry_Finish(struct parameters *P)
   Chem.ChemHead.energy_units     = Chem.ChemHead.density_units  * pow(Chem.ChemHead.velocity_units,2);
 
   //set the chemistry reaction unit
-  Chem.ChemHead.reaction_units = MH / (Chem.ChemHead.density_units * Chem.ChemHead.time_units);
+  //Chem.ChemHead.reaction_units = MH / (Chem.ChemHead.density_units * Chem.ChemHead.time_units);
+
+  //without cosmology
+  //reaction units are per number of hydrogen atoms in 1 msun per kpc^3
+  //per 1 kyr expressed in cm^-3 s^-1
+  Chem.ChemHead.reaction_units   = 1 / (Chem.ChemHead.dens_number_conv * Chem.ChemHead.time_units);
+
+
 #ifdef  BRUNO_CHEM_UNITS
   Chem.ChemHead.reaction_units /= pow(Chem.ChemHead.a_value,3); //comoving incl h?
 #endif //BRUNO_CHEM_UNITS
@@ -186,8 +228,13 @@ void Grid3D::Initialize_Chemistry_Finish(struct parameters *P)
   //Chem.ChemHead.density_conversion = Cosmo.rho_0_gas * Cosmo.cosmo_h * Cosmo.cosmo_h / pow(kpc_cgs, 3) * Msun_cgs;
   //Chem.ChemHead.density_conversion = Cosmo.rho_0_gas * Cosmo.cosmo_h * Cosmo.cosmo_h / pow(LENGTH_UNIT, 3) * Msun_cgs;
   //Chem.ChemHead.density_conversion = Cosmo.rho_0_gas * Cosmo.cosmo_h * Cosmo.cosmo_h / pow(LENGTH_UNIT, 3) * MASS_UNIT;
+  
+  // density conversion is rho_0_gas in comoving g/cm^3
   Chem.ChemHead.density_conversion *= pow(Chem.ChemHead.a_value,3);
+
+  // energy conversion is (r_0_gas/t_0_gas)^2 in cm/s
   Chem.ChemHead.energy_conversion   = Cosmo.v_0_gas * Cosmo.v_0_gas * KM_CGS * KM_CGS;  // km^2 -> cm^2 ;
+
   //Chem.ChemHead.energy_conversion   = Chem.ChemHead.energy_units / Chem.ChemHead.density_conversion; 
 
   //Chem.ChemHead.density_units    *= Cosmo.rho_0_gas*pow(Cosmo.cosmo_h,2)/pow(Chem.ChemHead.a_value,3); //physical

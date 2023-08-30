@@ -102,15 +102,15 @@ void Chem_GPU::Load_UVB_Ionization_and_Heating_Rates(struct parameters *P)
   chprintf("  UVB on:  a=%f \n", scale_factor_UVB_on);
 
   //BRANT print chemistry units
-  //chprintf_chemistry_units();
-  //chexit(0);
+  chprintf_chemistry_units();
+  chexit(0);
 }
 
 int Chem_GPU::chprintf_chemistry_units( void )
 {
   int code;
 
-  code = chprintf("********\n\n");
+  code = chprintf("****Chemistry****\n\n");
   code = chprintf("Chemistry Header time_units          %10.9e [same as TIME_UNIT].\n",ChemHead.time_units);
   code = chprintf("Chemistry Header length_units        %10.9e [same as LENGTH_UNIT].\n",ChemHead.length_units);
   code = chprintf("Chemistry Header velocity_units      %10.9e [length_units/time_units].\n",ChemHead.velocity_units);

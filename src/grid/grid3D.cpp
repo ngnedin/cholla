@@ -620,7 +620,7 @@ int Grid3D::Show_Units(struct parameters *P)
   code = chprintf("KPC_CGS                              %10.9e. [cm]\n",KPC_CGS);
   code = chprintf("KM_CGS                               %10.9e. [cm]\n",KM_CGS);
   code = chprintf("MH                                   %10.9e. [g]\n",MH);
-  code = chprintf("EV                                   %10.9e. [ergs]\n",EV_CGS);
+  code = chprintf("EV_CGS                               %10.9e. [ergs]\n",EV_CGS);
   code = chprintf("TIME_UNIT                            %10.9e. [kyr in s]\n",TIME_UNIT);
   code = chprintf("LENGTH_UNIT                          %10.9e. [kpc in cm]\n",LENGTH_UNIT);
   code = chprintf("MASS_UNIT                            %10.9e. [msun in g]\n",MASS_UNIT);
