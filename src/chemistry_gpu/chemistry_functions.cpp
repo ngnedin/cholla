@@ -146,7 +146,7 @@ void Grid3D::Initialize_Chemistry_Finish(struct parameters *P)
   Real Msun, kpc_cgs, kpc_km, dens_to_CGS;
   Msun = MSUN_CGS;
   kpc_cgs = KPC_CGS;
-  kpc_km  = KPC;
+  kpc_km  = KPC_KM;
   dens_to_CGS = Cosmo.rho_M_0 * Msun / kpc_cgs / kpc_cgs / kpc_cgs * Cosmo.cosmo_h * Cosmo.cosmo_h;
 
   // These are conversions from code units to cgs. Following Grackle

@@ -35,7 +35,7 @@ public:
   Real t_secs;
 
   Real r_kpch;          //1 kpc/h
-  Real t_Hinv_0;        //h/H0 in (kpc/h)/(km/s)
+  Real t_H0_inv;        //h/H0 in (kpc/h)/(km/s)
   Real v_0_cosmo;       //velocity scale (1 kpc/h)/(h/H0) in km/s
   Real phi_0_cosmo;     //potential scale in (km/s)^2
   Real rho_M_0;         //Matter density in h^2 Msun/kpc^3

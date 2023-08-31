@@ -1276,7 +1276,7 @@ void Grid3D::Clouds()
   rho_bg = n_bg * mu * MP / DENSITY_UNIT;
   rho_cl = n_cl * mu * MP / DENSITY_UNIT;
   vx_bg  = 0.0;
-  // vx_c  = -200*TIME_UNIT/KPC; // convert from km/s to kpc/kyr
+  // vx_c  = -200*TIME_UNIT/KPC_KM; // convert from km/s to kpc/kyr
   vx_cl = 0.0;
   vy_bg = vy_cl = 0.0;
   vz_bg = vz_cl = 0.0;
@@ -1523,7 +1523,7 @@ void Grid3D::Chemistry_Test(struct parameters P)
   z_ct       = P.Init_redshift;
   kpc_cgs    = KPC_CGS;
   G_ct       = G_COSMO;
-  h_ct       = H0 / 100;
+  h_ct       = H0_ct / 100;
   T0_ct      = 230.0;
 
   // M_sun = MSUN_CGS;
@@ -1555,9 +1555,9 @@ void Grid3D::Chemistry_Test(struct parameters P)
 
   mu_ct = (HI_frac + HII_frac + HeI_frac + HeII_frac + HeIII_frac) /
           (HI_frac + HII_frac + (HeI_frac + HeII_frac + HeIII_frac) / 4 + HII_frac + (HeII_frac + 2 * HeIII_frac) / 4);
-  U = rho_b_0_ct * T0_ct / (gama - 1) / MP / mu_ct * KB * 1e-10;
+  U_ct = rho_b_0_ct * T0_ct / (gama - 1) / MP / mu_ct * KB * 1e-10;
   chprintf(" mu = %f \n", mu_ct);
-  chprintf(" U0 = %f \n", U);
+  chprintf(" U0 = %f \n", U_ct);
 
   chprintf(" HI_0 = %f \n", rho_b_0_ct * HI_frac);
 
@@ -1572,10 +1572,10 @@ void Grid3D::Chemistry_Test(struct parameters P)
         C.momentum_x[id] = 0;
         C.momentum_y[id] = 0;
         C.momentum_z[id] = 0;
-        C.Energy[id]     = U;
+        C.Energy[id]     = U_ct;
 
   #ifdef DE
-        C.GasEnergy[id] = U;
+        C.GasEnergy[id] = U_ct;
   #endif
 
   #ifdef CHEMISTRY_GPU

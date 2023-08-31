@@ -40,10 +40,10 @@ void Cosmology::SetUnitsCosmology(struct parameters *P, Grav3D &Grav)
   rho_M_0 = 3 * H0 * H0 / (8 * M_PI * cosmo_G) * Omega_M / cosmo_h / cosmo_h;
 
   //time scale in (kpc/h)/(km/2)
-  t_Hinv_0   = cosmo_h / H0;
+  t_H0_inv   = cosmo_h / H0;
 
   //velocity scale in km/s
-  v_0_cosmo   = r_kpch / t_Hinv_0;  //km/s
+  v_0_cosmo   = r_kpch / t_H0_inv;  //km/s
 
   //potential scale in km^2/s^2
   phi_0_cosmo = v_0_cosmo * v_0_cosmo;  //(km/s)^2
@@ -79,15 +79,15 @@ int Cosmology::chprintf_cosmology_units(void)
   code = chprintf("Current_z:       %10.9e [Current redshift]\n", current_z);
 
   code = chprintf("**** Cosmological Unit System ****\n\n");
-  code = chprintf("cosmo_G:         %10.9e [same as G_COSMO, in kpc km^2/s^2 /Msun]")
+  code = chprintf("cosmo_G:         %10.9e [same as G_COSMO, in kpc km^2/s^2 /Msun]\n", cosmo_G);
   code = chprintf("rho_b_0:         %10.9e [3 Omega_b H0^2/(8piG)/h^2 in h^2 Msun/kpc^3]\n", rho_b_0);
   code = chprintf("rho_M_0:         %10.9e [3 Omega_m H0^2/(8piG)/h^2 in h^2 Msun/kpc^3]\n", rho_M_0);
   code = chprintf("r_kpch:          %10.9e [1 kpc/h]\n", r_kpch);
   code = chprintf("t_H0_inv:        %10.9e [h/H0 in (kpc/h)/(km/s)]\n", t_H0_inv);
   code = chprintf("v_0_cosmo:       %10.9e [r_kpch/t_H0_inv in km/s]\n", v_0_cosmo);
-  code = chprintf("phi_0_cosmo:       %10.9e [v_0_cosmo^2 in km^2/s^2]\n", phi_0_cosmo);
+  code = chprintf("phi_0_cosmo:     %10.9e [v_0_cosmo^2 in km^2/s^2]\n", phi_0_cosmo);
   code = chprintf("Max delta_a:     %10.9e [Maximum change in scale factor]\n", max_delta_a);
-  code = chprintf("time_conversion: %10.9e [kpc in km, for use with H0]")
+  code = chprintf("time_conversion: %10.9e [kpc in km, for use with H0]", time_conversion);
   code = chprintf("\n********\n");
 
 
