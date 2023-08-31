@@ -15,40 +15,31 @@ class Cosmology
 {
 public:
 
-  Real H0;
-  Real Omega_M;
-  Real Omega_L;
-  Real Omega_K;
-  Real Omega_b;
-  Real Omega_R;
+  Real H0;              //Hubble constant in km/s/kpc
+  Real Omega_M;         //Matter density
+  Real Omega_L;         //Dark energy density
+  Real Omega_K;         //Curvature energy density
+  Real Omega_b;         //Baryon density
+  Real Omega_R;         //Radiation energy density
 
-  Real cosmo_G;
-  Real cosmo_h;
-  Real current_z;
-  Real current_a;
-  Real max_delta_a;
-  Real delta_a;
+  Real cosmo_G;         //Gravitational constant in 
+  Real cosmo_h;         //Hubble parameter H0 [in km/s/Mpc]/100[km/s/Mpc]
+  Real current_z;       //Redshift
+  Real current_a;       //Scale factor
+  Real max_delta_a;     //Maximum allowable change in scale factor
+  Real delta_a;         //Change in scale factor
 
-  Real r_0_dm;
-  Real t_0_dm;
-  Real v_0_dm;
-  Real rho_0_dm;
-  Real phi_0_dm;
-  Real rho_mean_baryon;
 
-  Real time_conversion;
+  Real time_conversion; //kpc in km, for use with H0 as a time unit
   Real dt_secs;
   Real t_secs;
 
-  // Real dens_avrg;
-
-  Real r_0_gas;
-  Real v_0_gas;
-  Real t_0_gas;
-  Real phi_0_gas;
-  Real rho_0_gas;
-  Real p_0_gas;
-  Real e_0_gas;
+  Real r_kpch;          //1 kpc/h
+  Real t_Hinv_0;        //h/H0 in (kpc/h)/(km/s)
+  Real v_0_cosmo;       //velocity scale (1 kpc/h)/(h/H0) in km/s
+  Real phi_0_cosmo;     //potential scale in (km/s)^2
+  Real rho_M_0;         //Matter density in h^2 Msun/kpc^3
+  Real rho_b_0;         //Mean baryon density in h^2 Msun/kpc^3
 
   int n_outputs;
   int next_output_indx;
@@ -69,9 +60,9 @@ public:
     int ny_total;
     int nz_total;
     
-    Real *random_fluctiations;
-    Real *rescaled_random_fluctiations_dm;
-    Real *rescaled_random_fluctiations_gas;
+    Real *random_fluctuations;
+    Real *rescaled_random_fluctuations_dm;
+    Real *rescaled_random_fluctuations_gas;
     
     Cosmo_Power_Spectrum Power_Spectrum;
     
@@ -83,6 +74,15 @@ public:
   
   Cosmology( void );
   void Initialize( struct parameters *P, Grav3D &Grav, Particles_3D &Particles );
+
+  //Set the cosmological parameters used by the code
+  void SetCosmologicalParameters(struct parameters *P);
+
+  //Set the unit system for cosmological calculations
+  void SetUnitsCosmology(struct parameters *P, Grav3D &Grav);
+
+  // print the cosmological unit system
+  int chprintf_cosmology_units(void);
 
   void Load_Scale_Outputs( struct parameters *P );
   void Set_Scale_Outputs( struct parameters *P );

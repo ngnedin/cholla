@@ -428,7 +428,7 @@ Real Grid3D::Update_Grid(void)
   U_floor = H.temperature_floor * KB / (gama - 1) / MP / SP_ENERGY_UNIT;
 #ifdef COSMOLOGY
   U_floor = H.temperature_floor / (gama - 1) / MP * KB * 1e-10;  // ( km/s )^2
-  U_floor /= Cosmo.v_0_gas * Cosmo.v_0_gas / Cosmo.current_a / Cosmo.current_a;
+  U_floor /= Cosmo.v_0_cosmo * Cosmo.v_0_cosmo / Cosmo.current_a / Cosmo.current_a;
 #endif
 
   // Run the hydro integrator on the grid
@@ -632,32 +632,7 @@ int Grid3D::Show_Units(struct parameters *P)
   code = chprintf("M_PI                                 %10.9e.\n",M_PI);
 
 #ifdef COSMOLOGY
-  chprintf("*** cosmology ***\n");
-  code = chprintf("Cosmo.cosmo_G                        %10.9e. [same as G_COSMO in kpc km^2/s^2 /Msun]\n",Cosmo.cosmo_G);
-  code = chprintf("Cosmo.cosmo_h                        %10.9e. [H0/100]\n",Cosmo.cosmo_h);
-  code = chprintf("Cosmo.H0                             %10.9e. [H0 in km/s/kpc]\n",Cosmo.H0);
-  code = chprintf("P->nx                                 % 14d. [number of cells in x]\n",P->nx);
-  code = chprintf("P->xlen                              %10.9e. [length of x domain in kpc/h]\n",P->xlen);
-
-  chprintf("****dm*****\n");
-  code = chprintf("Cosmo.rho_dm                         %10.9e. [3H0^2/(8 pi G) * Omega_M/cosmo_h^2 in h^2 Msun/kpc^3]\n",Cosmo.rho_0_dm);
-  code = chprintf("Cosmo.rho_mean_baryon                %10.9e. [3H0^2/(8 pi G) * Omega_b/cosmo_h^2 in h^2 Msun/kpc^3]\n",Cosmo.rho_mean_baryon);
-  code = chprintf("Cosmo.t_0_dm                         %10.9e. [1.0/H0*cosmo_h in kpc * s/km / h]\n",Cosmo.t_0_dm);
-  code = chprintf("Cosmo.r_0_dm                         %10.9e. [xlen / nx in kpc/h]\n",Cosmo.r_0_dm);
-  code = chprintf("Cosmo.v_0_dm                         %10.9e. [r_0_dm / t_0_dm in km/s]\n",Cosmo.v_0_dm);
-  chprintf("****gas*****\n");
-  code = chprintf("Cosmo.rho_0_gas                      %10.9e. [3H0^2/(8 pi G) * Omega_m/cosmo_h^2 in h^2 Msun/kpc^3]\n",Cosmo.rho_0_gas);
-  code = chprintf("Cosmo.r_0_gas                        %10.9e. [1.0/h kpc/h]\n",Cosmo.r_0_gas);
-  code = chprintf("Cosmo.t_0_gas                        %10.9e. [1.0/H0*cosmo_h in kpc * s/km / h]\n",Cosmo.t_0_gas);
-  code = chprintf("Cosmo.v_0_gas                        %10.9e. [r_0_gas / t_0_gas in km/s]\n",Cosmo.v_0_gas);
-
-  // Set Normalization factors
-  //   r_0_dm          = P->xlen / P->nx;
-  //     t_0_dm          = 1. / H0;
-  //       v_0_dm          = r_0_dm / t_0_dm / cosmo_h;
-  //         rho_0_dm        = 3 * H0 * H0 / (8 * M_PI * cosmo_G) * Omega_M / cosmo_h / cosmo_h;
-  //           rho_mean_baryon = 3 * H0 * H0 / (8 * M_PI * cosmo_G) * Omega_b / cosmo_h / cosmo_h;
-  //             // dens_avrg = 0;
+  Cosmo.chprintf_cosmology_units();
 #endif //COSMOLOGY
 
 #ifdef CHEMISTRY_GPU

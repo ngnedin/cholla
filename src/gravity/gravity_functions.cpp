@@ -514,14 +514,17 @@ void Grid3D::Compute_Gravitational_Potential(struct parameters *P)
   Copy_Hydro_Density_to_Gravity();
   #endif
 
-  #ifdef COSMOLOGY
-  // If using cosmology, set the gravitational constant to the one in the
-  // correct units
-  const Real Grav_Constant = Cosmo.cosmo_G;
-  const Real current_a     = Cosmo.current_a;
-  const Real dens_avrg     = Cosmo.rho_0_gas;
-  #else
+
+  //The gravitational constant is set upstream, 
+  //and when using cosmology it is set in 
+  //cosmology/cosmology.cpp:SetUnitsCosmology()
   const Real Grav_Constant = Grav.Gconst;
+
+
+  #ifdef COSMOLOGY
+  const Real current_a     = Cosmo.current_a;
+  const Real dens_avrg     = Cosmo.rho_M_0;
+  #else
   // If slowing the Sphere Collapse problem ( bc_potential_type=0 )
   const Real dens_avrg = (P->bc_potential_type == 0) ? H.sphere_background_density : 0;
   const Real r0        = H.sphere_radius;
@@ -672,7 +675,7 @@ void Grid3D::Copy_Hydro_Density_to_Gravity_Function(int g_start, int g_end)
 
   // If using cosmology the density must be rescaled to the physical coordinates
   #ifdef COSMOLOGY
-        dens *= Cosmo.rho_0_gas;
+        dens *= Cosmo.rho_M_0;
   #endif
 
   #ifdef PARTICLES
@@ -808,7 +811,7 @@ void Grid3D::Extrapolate_Grav_Potential_Function(int g_start, int g_end)
   #ifdef COSMOLOGY
         // For cosmological simulation the potential is tranformed to 'comoving
         // coordinates'
-        pot_extrp *= Cosmo.current_a * Cosmo.current_a / Cosmo.phi_0_gas;
+        pot_extrp *= Cosmo.current_a * Cosmo.current_a / Cosmo.phi_0_cosmo;
   #endif
 
         // Save the extrapolated potential

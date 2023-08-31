@@ -38,8 +38,8 @@ void Cool_GK::Initialize(struct parameters *P, Cosmology &Cosmo)
   tiny_number = 1.e-20;
   gamma       = P->gamma;
 
-  dens_conv   = Cosmo.rho_0_gas;
-  energy_conv = Cosmo.v_0_gas * Cosmo.v_0_gas;
+  dens_conv   = Cosmo.rho_M_0;
+  energy_conv = Cosmo.v_0_cosmo * Cosmo.v_0_cosmo;
 
   Real Msun = MSUN_CGS;
   Real kpc  = KPC_CGS;
