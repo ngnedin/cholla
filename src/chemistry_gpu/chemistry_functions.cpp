@@ -81,12 +81,6 @@ void Grid3D::Initialize_Chemistry_Finish(struct parameters *P)
   //note Chemistry Header H0 is in km/s/Mpc
   Chem.ChemHead.H0               = P->H0;
 
-  //fractional matter density
-  Chem.ChemHead.Omega_M          = P->Omega_M;
-
-  //fractional dark energy density
-  Chem.ChemHead.Omega_L          = P->Omega_L;
-
 #define BRUNO_CHEM_UNITS
 //
 #ifdef BRUNO_CHEM_UNITS

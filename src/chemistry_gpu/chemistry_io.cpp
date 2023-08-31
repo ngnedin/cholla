@@ -131,8 +131,6 @@ int Chem_GPU::chprintf_chemistry_units( void )
 #ifdef COSMOLOGY
   code = chprintf("Chemistry Header a_value             %10.9e.\n",ChemHead.a_value);
   code = chprintf("Chemistry Header H0                  %10.9e.\n",ChemHead.H0);
-  code = chprintf("Chemistry Header Omega_M             %10.9e.\n",ChemHead.Omega_M);
-  code = chprintf("Chemistry Header Omega_L             %10.9e.\n",ChemHead.Omega_L);
 #endif //COSMOLOGY
 
 

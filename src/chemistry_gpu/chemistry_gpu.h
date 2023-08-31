@@ -46,10 +46,8 @@ struct Chemistry_Header {
   //   heat_units = eV_to_ergs * 1e-10 * ChemHead.time_units * ChemHead.density_units / MH / MH;
   //     ion_units  = ChemHead.time_units;
 
-  // Cosmological parameters
+  // Hubble parameter
   Real H0;
-  Real Omega_M;
-  Real Omega_L;
 
   // Interpolation tables for the rates
   int N_Temp_bins;
