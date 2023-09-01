@@ -74,9 +74,6 @@ void Chem_GPU::Load_UVB_Ionization_and_Heating_Rates(struct parameters *P)
   //chprintf("ion_units  %10.9e\n",ion_units);
   //chprintf("eV_to_ergs [electron volts in cgs] %10.9e ergs.\n",eV_to_ergs);
 
-  //chprintf_chemistry_units();
-  //chexit(0);
-
   Real ion_units  = ChemHead.ion_units;
   Real heat_units = ChemHead.heat_units;
   for (i = 0; i < n_lines; i++) {
@@ -105,10 +102,6 @@ void Chem_GPU::Load_UVB_Ionization_and_Heating_Rates(struct parameters *P)
   chprintf("  N redshift values: %d \n", n_uvb_rates_samples);
   chprintf("  z_min = %f    z_max = %f \n", rates_z_h[0], rates_z_h[n_uvb_rates_samples - 1]);
   chprintf("  UVB on:  a=%f \n", scale_factor_UVB_on);
-
-  //BRANT print chemistry units
-  chprintf_chemistry_units();
-  chexit(0);
 }
 
 
@@ -118,7 +111,7 @@ int Chem_GPU::chprintf_chemistry_units( void )
 {
   int code;
 
-  code = chprintf("****Chemistry****\n\n");
+  code = chprintf("**** Chemistry ****\n\n");
   code = chprintf("Chemistry Header time_units          %10.9e [same as TIME_UNIT].\n",ChemHead.time_units);
   code = chprintf("Chemistry Header length_units        %10.9e [same as LENGTH_UNIT].\n",ChemHead.length_units);
   code = chprintf("Chemistry Header velocity_units      %10.9e [length_units/time_units].\n",ChemHead.velocity_units);

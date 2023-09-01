@@ -186,11 +186,11 @@ int main(int argc, char *argv[])
 #endif
 
 
-
   //record what unit system was used
   G.Show_Units(&P);
 
-  chexit(0);
+  //fflush(stdout);
+  //chexit(0);
 
 
 #ifdef GRAVITY

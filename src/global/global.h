@@ -65,7 +65,8 @@ typedef double Real;
 //#define KPC_CGS  3.086e21          // kpc in cm
 #define MSUN_CGS MASS_UNIT           // Msun in gr
 #define KPC_CGS  LENGTH_UNIT         // kpc in cm
-#define MH       1.673723746788804e-24      // Mass of hydrogen [g], NIST, 1.00794 amu
+//#define MH       1.673723746788804e-24      // Mass of hydrogen [g], NIST, 1.00794 amu
+#define MH          1.67262192369e-24  // mass of proton, grams, from NIST
 #define EV_CGS   1.602176634e-12     // eV in ergs
 #define K_EV     (EV_CGS/KB)         // Kelvin in eV
 
