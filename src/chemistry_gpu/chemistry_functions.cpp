@@ -46,7 +46,7 @@ void Grid3D::Initialize_Chemistry_Finish(struct parameters *P)
   // Set up the units system for chemistry
   // This propagates all the units to 
   // ChemHead
-  Chem.SetUnitsChemistry(P);
+  SetUnitsChemistry(P);
 
   // Initialize all the rate tables and 
   // load them from file
