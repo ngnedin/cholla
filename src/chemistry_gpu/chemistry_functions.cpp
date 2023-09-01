@@ -12,12 +12,20 @@
 
   #define TINY 1e-20
 
+
+//Set the recombination case and the
+//initial hydrogen fraction
 void Grid3D::Initialize_Chemistry_Start(struct parameters *P)
 {
   Chem.recombination_case = 0; // set case A recombination
   Chem.ChemHead.H_fraction = INITIAL_FRACTION_HI + INITIAL_FRACTION_HII; // initial H fraction = HI + HII
 }
 
+
+//Create the chemistry header,
+//the chemistry unit system
+//and load the cooling and
+//reaction rate tables
 void Grid3D::Initialize_Chemistry_Finish(struct parameters *P)
 {
   chprintf("Initializing the GPU Chemistry Solver... \n");
@@ -102,7 +110,7 @@ void Grid3D::Initialize_Chemistry_Finish(struct parameters *P)
 
   //this time unit converts between Hubble parameter in
   //km/s/kpc to 1/s
-  Chem.ChemHead.time_units       *= (KPC_KM/Cosmo.cosmo_h)/TIME_UNIT; //WTH -- convert Hubble from km/s/kpc to 1/s?
+  Chem.ChemHead.time_units       *= (Cosmo.time_conversion/Cosmo.cosmo_h)/TIME_UNIT; //convert Hubble from km/s/kpc to 1/s
 
   //converts 
   Chem.ChemHead.dens_number_conv *= Cosmo.rho_M_0*pow(Cosmo.cosmo_h,2); //comoving, incl h
@@ -259,13 +267,16 @@ void Grid3D::Initialize_Chemistry_Finish(struct parameters *P)
   Chem.ChemHead.unitPhotoIonization = Chem.ChemHead.time_units;
   #endif  // RT
 
-  chprintf("Allocating Memory. \n\n");
+  chprintf("Allocating Memory in Initialize_Chemistry_Finish(). \n\n");
   int n_cells               = H.nx * H.ny * H.nz;
   Chem.Fields.temperature_h = (Real *)malloc(n_cells * sizeof(Real));
 
   chprintf("Chemistry Solver Successfully Initialized. \n\n");
 }
 
+//creates a temperature-dependent
+//reaction or cooling rate look-up
+//table and copies it to the GPU
 void Chem_GPU::Generate_Reaction_Rate_Table(Real **rate_table_array_d, Rate_Function_T rate_function, Real units)
 {
   // Host array for storing the rates
@@ -292,116 +303,14 @@ void Chem_GPU::Generate_Reaction_Rate_Table(Real **rate_table_array_d, Rate_Func
   free(rate_table_array_h);
 }
 
-void Chem_GPU::Initialize(struct parameters *P)
-{
-  Initialize_Cooling_Rates();
 
-  Initialize_Reaction_Rates();
 
-  #ifndef RT //need to work out how to include this -- BRANT
-  Initialize_UVB_Ionization_and_Heating_Rates(P);
-  #endif  // RT
-}
 
-void Chem_GPU::Initialize_Cooling_Rates()
-{
-  chprintf(" Initializing Cooling Rates... \n");
-  Real units = ChemHead.cooling_units;
-  Generate_Reaction_Rate_Table(&ChemHead.cool_ceHI_d, cool_ceHI_rate, units);
-  Generate_Reaction_Rate_Table(&ChemHead.cool_ceHeI_d, cool_ceHeI_rate, units);
-  Generate_Reaction_Rate_Table(&ChemHead.cool_ceHeII_d, cool_ceHeII_rate, units);
 
-  Generate_Reaction_Rate_Table(&ChemHead.cool_ciHI_d, cool_ciHI_rate, units);
-  Generate_Reaction_Rate_Table(&ChemHead.cool_ciHeI_d, cool_ciHeI_rate, units);
-  Generate_Reaction_Rate_Table(&ChemHead.cool_ciHeII_d, cool_ciHeII_rate, units);
-  Generate_Reaction_Rate_Table(&ChemHead.cool_ciHeIS_d, cool_ciHeIS_rate, units);
-
-  switch (recombination_case) {
-    case 0: {
-      Generate_Reaction_Rate_Table(&ChemHead.cool_reHII_d, cool_reHII_rate_case_A, units);
-      Generate_Reaction_Rate_Table(&ChemHead.cool_reHeII1_d, cool_reHeII1_rate_case_A, units);
-      Generate_Reaction_Rate_Table(&ChemHead.cool_reHeIII_d, cool_reHeIII_rate_case_A, units);
-      break;
-    }
-    case 1:
-    case 2: {
-      Generate_Reaction_Rate_Table(&ChemHead.cool_reHII_d, cool_reHII_rate_case_B, units);
-      Generate_Reaction_Rate_Table(&ChemHead.cool_reHeII1_d, cool_reHeII1_rate_case_B, units);
-      Generate_Reaction_Rate_Table(&ChemHead.cool_reHeIII_d, cool_reHeIII_rate_case_B, units);
-      break;
-    }
-  }
-  Generate_Reaction_Rate_Table(&ChemHead.cool_reHeII2_d, cool_reHeII2_rate, units);
-
-  Generate_Reaction_Rate_Table(&ChemHead.cool_brem_d, cool_brem_rate, units);
-
-  ChemHead.cool_compton = 5.65e-36 / units;
-}
-
-void Chem_GPU::Initialize_Reaction_Rates()
-{
-  chprintf(" Initializing Reaction Rates... \n");
-  Real units = ChemHead.reaction_units;
-  Generate_Reaction_Rate_Table(&ChemHead.k_coll_i_HI_d, coll_i_HI_rate, units);
-  Generate_Reaction_Rate_Table(&ChemHead.k_coll_i_HeI_d, coll_i_HeI_rate, units);
-  Generate_Reaction_Rate_Table(&ChemHead.k_coll_i_HeII_d, coll_i_HeII_rate, units);
-  Generate_Reaction_Rate_Table(&ChemHead.k_coll_i_HI_HI_d, coll_i_HI_HI_rate, units);
-  Generate_Reaction_Rate_Table(&ChemHead.k_coll_i_HI_HeI_d, coll_i_HI_HeI_rate, units);
-
-  switch (recombination_case) {
-    case 0: {
-      Generate_Reaction_Rate_Table(&ChemHead.k_recomb_HII_d, recomb_HII_rate_case_A, units);
-      Generate_Reaction_Rate_Table(&ChemHead.k_recomb_HeII_d, recomb_HeII_rate_case_A, units);
-      Generate_Reaction_Rate_Table(&ChemHead.k_recomb_HeIII_d, recomb_HeIII_rate_case_A, units);
-      break;
-    }
-    case 1: {
-      Generate_Reaction_Rate_Table(&ChemHead.k_recomb_HII_d, recomb_HII_rate_case_B, units);
-      Generate_Reaction_Rate_Table(&ChemHead.k_recomb_HeII_d, recomb_HeII_rate_case_B, units);
-      Generate_Reaction_Rate_Table(&ChemHead.k_recomb_HeIII_d, recomb_HeIII_rate_case_B, units);
-      break;
-    }
-    case 2: {
-      Generate_Reaction_Rate_Table(&ChemHead.k_recomb_HII_d, recomb_HII_rate_case_Iliev1, units);
-      Generate_Reaction_Rate_Table(&ChemHead.k_recomb_HeII_d, recomb_HeII_rate_case_B, units);
-      Generate_Reaction_Rate_Table(&ChemHead.k_recomb_HeIII_d, recomb_HeIII_rate_case_B, units);
-      break;
-    }
-  }
-}
-
-void Chem_GPU::Initialize_UVB_Ionization_and_Heating_Rates(struct parameters *P)
-{
-  chprintf(" Initializing UVB Rates... \n");
-  Load_UVB_Ionization_and_Heating_Rates(P);
-
-  Copy_UVB_Rates_to_GPU();
-
-  #ifdef TEXTURES_UVB_INTERPOLATION
-  Bind_GPU_Textures(n_uvb_rates_samples, Heat_rates_HI_h, Heat_rates_HeI_h, Heat_rates_HeII_h, Ion_rates_HI_h,
-                    Ion_rates_HeI_h, Ion_rates_HeII_h);
-  #endif
-}
-
-void Chem_GPU::Copy_UVB_Rates_to_GPU()
-{
-  Allocate_Array_GPU_float(&rates_z_d, n_uvb_rates_samples);
-  Allocate_Array_GPU_float(&Heat_rates_HI_d, n_uvb_rates_samples);
-  Allocate_Array_GPU_float(&Heat_rates_HeI_d, n_uvb_rates_samples);
-  Allocate_Array_GPU_float(&Heat_rates_HeII_d, n_uvb_rates_samples);
-  Allocate_Array_GPU_float(&Ion_rates_HI_d, n_uvb_rates_samples);
-  Allocate_Array_GPU_float(&Ion_rates_HeI_d, n_uvb_rates_samples);
-  Allocate_Array_GPU_float(&Ion_rates_HeII_d, n_uvb_rates_samples);
-
-  Copy_Float_Array_to_Device(n_uvb_rates_samples, rates_z_h, rates_z_d);
-  Copy_Float_Array_to_Device(n_uvb_rates_samples, Heat_rates_HI_h, Heat_rates_HI_d);
-  Copy_Float_Array_to_Device(n_uvb_rates_samples, Heat_rates_HeI_h, Heat_rates_HeI_d);
-  Copy_Float_Array_to_Device(n_uvb_rates_samples, Heat_rates_HeII_h, Heat_rates_HeII_d);
-  Copy_Float_Array_to_Device(n_uvb_rates_samples, Ion_rates_HI_h, Ion_rates_HI_d);
-  Copy_Float_Array_to_Device(n_uvb_rates_samples, Ion_rates_HeI_h, Ion_rates_HeI_d);
-  Copy_Float_Array_to_Device(n_uvb_rates_samples, Ion_rates_HeII_h, Ion_rates_HeII_d);
-}
-
+//Wrapper function to call the
+//chemistry update step; sets
+//the redshift and optionally
+//passes the radiation fields
 void Grid3D::Update_Chemistry()
 {
   #ifdef COSMOLOGY
@@ -417,6 +326,10 @@ void Grid3D::Update_Chemistry()
   #endif
 }
 
+//Compute the gas temperature field
+//from the gas properties stored on
+//the grid. Allow for cosmological
+//unit conversion. BRANT: complete
 void Grid3D::Compute_Gas_Temperature(Real *temperature, bool convert_cosmo_units)
 {
   int k, j, i, id;
@@ -474,6 +387,161 @@ void Grid3D::Compute_Gas_Temperature(Real *temperature, bool convert_cosmo_units
   }
 }
 
+//initializes the cooling and
+//reaction rate tables, initializes
+//and loads the UVB ionization
+//and heating rate tables
+void Chem_GPU::Initialize(struct parameters *P)
+{
+
+  //create the cooling rate tables
+  //and set their units
+  Initialize_Cooling_Rates();
+
+  //create the reaction rate tables
+  //and set their units
+  Initialize_Reaction_Rates();
+
+  #ifndef RT //need to work out how to include this -- BRANT
+  Initialize_UVB_Ionization_and_Heating_Rates(P);
+  #endif  // RT
+}
+
+  //creates the cooling rate tables
+  //for collisional ionization,
+  //collisional excitation, 
+  //recombination, compton, and
+  //bremsstrahlung
+void Chem_GPU::Initialize_Cooling_Rates()
+{
+  chprintf(" Initializing Cooling Rates... \n");
+
+  //create the unit system for
+  //cooling. Here, cooling units
+  //are BRANT: complete
+  Real units = ChemHead.cooling_units;
+
+
+  //create collisional excitation rates
+  Generate_Reaction_Rate_Table(&ChemHead.cool_ceHI_d, cool_ceHI_rate, units);
+  Generate_Reaction_Rate_Table(&ChemHead.cool_ceHeI_d, cool_ceHeI_rate, units);
+  Generate_Reaction_Rate_Table(&ChemHead.cool_ceHeII_d, cool_ceHeII_rate, units);
+
+  //create collisional ionization rates
+  Generate_Reaction_Rate_Table(&ChemHead.cool_ciHI_d, cool_ciHI_rate, units);
+  Generate_Reaction_Rate_Table(&ChemHead.cool_ciHeI_d, cool_ciHeI_rate, units);
+  Generate_Reaction_Rate_Table(&ChemHead.cool_ciHeII_d, cool_ciHeII_rate, units);
+  Generate_Reaction_Rate_Table(&ChemHead.cool_ciHeIS_d, cool_ciHeIS_rate, units);
+
+  //create recombination rates
+  switch (recombination_case) {
+    case 0: {
+      Generate_Reaction_Rate_Table(&ChemHead.cool_reHII_d, cool_reHII_rate_case_A, units);
+      Generate_Reaction_Rate_Table(&ChemHead.cool_reHeII1_d, cool_reHeII1_rate_case_A, units);
+      Generate_Reaction_Rate_Table(&ChemHead.cool_reHeIII_d, cool_reHeIII_rate_case_A, units);
+      break;
+    }
+    case 1:
+    case 2: {
+      Generate_Reaction_Rate_Table(&ChemHead.cool_reHII_d, cool_reHII_rate_case_B, units);
+      Generate_Reaction_Rate_Table(&ChemHead.cool_reHeII1_d, cool_reHeII1_rate_case_B, units);
+      Generate_Reaction_Rate_Table(&ChemHead.cool_reHeIII_d, cool_reHeIII_rate_case_B, units);
+      break;
+    }
+  }
+  Generate_Reaction_Rate_Table(&ChemHead.cool_reHeII2_d, cool_reHeII2_rate, units);
+
+  //create bremsstrahlung rates
+  Generate_Reaction_Rate_Table(&ChemHead.cool_brem_d, cool_brem_rate, units);
+
+  //set compton cooling rates
+  ChemHead.cool_compton = 5.65e-36 / units;
+}
+
+  //creates the reaction rate tables
+  //for collisions and recombinations
+void Chem_GPU::Initialize_Reaction_Rates()
+{
+  chprintf(" Initializing Reaction Rates... \n");
+
+  //create the unit system for
+  //reactions. Here, reaction_units
+  //are BRANT: complete
+  Real units = ChemHead.reaction_units;
+
+  //create reaction rates for collisional
+  //ionization
+  Generate_Reaction_Rate_Table(&ChemHead.k_coll_i_HI_d, coll_i_HI_rate, units);
+  Generate_Reaction_Rate_Table(&ChemHead.k_coll_i_HeI_d, coll_i_HeI_rate, units);
+  Generate_Reaction_Rate_Table(&ChemHead.k_coll_i_HeII_d, coll_i_HeII_rate, units);
+  Generate_Reaction_Rate_Table(&ChemHead.k_coll_i_HI_HI_d, coll_i_HI_HI_rate, units);
+  Generate_Reaction_Rate_Table(&ChemHead.k_coll_i_HI_HeI_d, coll_i_HI_HeI_rate, units);
+
+  //create the reaction rates for
+  //recombinations
+  switch (recombination_case) {
+    case 0: {
+      Generate_Reaction_Rate_Table(&ChemHead.k_recomb_HII_d, recomb_HII_rate_case_A, units);
+      Generate_Reaction_Rate_Table(&ChemHead.k_recomb_HeII_d, recomb_HeII_rate_case_A, units);
+      Generate_Reaction_Rate_Table(&ChemHead.k_recomb_HeIII_d, recomb_HeIII_rate_case_A, units);
+      break;
+    }
+    case 1: {
+      Generate_Reaction_Rate_Table(&ChemHead.k_recomb_HII_d, recomb_HII_rate_case_B, units);
+      Generate_Reaction_Rate_Table(&ChemHead.k_recomb_HeII_d, recomb_HeII_rate_case_B, units);
+      Generate_Reaction_Rate_Table(&ChemHead.k_recomb_HeIII_d, recomb_HeIII_rate_case_B, units);
+      break;
+    }
+    case 2: {
+      Generate_Reaction_Rate_Table(&ChemHead.k_recomb_HII_d, recomb_HII_rate_case_Iliev1, units);
+      Generate_Reaction_Rate_Table(&ChemHead.k_recomb_HeII_d, recomb_HeII_rate_case_B, units);
+      Generate_Reaction_Rate_Table(&ChemHead.k_recomb_HeIII_d, recomb_HeIII_rate_case_B, units);
+      break;
+    }
+  }
+}
+
+
+//loads the uvb rates from file and
+//copies them to the gpu
+void Chem_GPU::Initialize_UVB_Ionization_and_Heating_Rates(struct parameters *P)
+{
+  chprintf(" Initializing UVB Rates... \n");
+
+  //loads the uvb rates from a file
+  Load_UVB_Ionization_and_Heating_Rates(P);
+
+  //copy uvb rates to the gpu
+  Copy_UVB_Rates_to_GPU();
+
+  #ifdef TEXTURES_UVB_INTERPOLATION
+  Bind_GPU_Textures(n_uvb_rates_samples, Heat_rates_HI_h, Heat_rates_HeI_h, Heat_rates_HeII_h, Ion_rates_HI_h,
+                    Ion_rates_HeI_h, Ion_rates_HeII_h);
+  #endif
+}
+
+//Copies chemistry uvb rate arrays to GPU
+void Chem_GPU::Copy_UVB_Rates_to_GPU()
+{
+  Allocate_Array_GPU_float(&rates_z_d, n_uvb_rates_samples);
+  Allocate_Array_GPU_float(&Heat_rates_HI_d, n_uvb_rates_samples);
+  Allocate_Array_GPU_float(&Heat_rates_HeI_d, n_uvb_rates_samples);
+  Allocate_Array_GPU_float(&Heat_rates_HeII_d, n_uvb_rates_samples);
+  Allocate_Array_GPU_float(&Ion_rates_HI_d, n_uvb_rates_samples);
+  Allocate_Array_GPU_float(&Ion_rates_HeI_d, n_uvb_rates_samples);
+  Allocate_Array_GPU_float(&Ion_rates_HeII_d, n_uvb_rates_samples);
+
+  Copy_Float_Array_to_Device(n_uvb_rates_samples, rates_z_h, rates_z_d);
+  Copy_Float_Array_to_Device(n_uvb_rates_samples, Heat_rates_HI_h, Heat_rates_HI_d);
+  Copy_Float_Array_to_Device(n_uvb_rates_samples, Heat_rates_HeI_h, Heat_rates_HeI_d);
+  Copy_Float_Array_to_Device(n_uvb_rates_samples, Heat_rates_HeII_h, Heat_rates_HeII_d);
+  Copy_Float_Array_to_Device(n_uvb_rates_samples, Ion_rates_HI_h, Ion_rates_HI_d);
+  Copy_Float_Array_to_Device(n_uvb_rates_samples, Ion_rates_HeI_h, Ion_rates_HeI_d);
+  Copy_Float_Array_to_Device(n_uvb_rates_samples, Ion_rates_HeII_h, Ion_rates_HeII_d);
+}
+
+
+// Free chemistry rate arrays 
 void Chem_GPU::Reset()
 {
   #ifndef RT //need to work out how to include this -- BRANT
@@ -495,5 +563,4 @@ void Chem_GPU::Reset()
   #endif
   free(Fields.temperature_h);
 }
-
-#endif
+#endif //CHEMISTRY_GPU

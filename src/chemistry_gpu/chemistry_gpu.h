@@ -18,19 +18,21 @@ class Grid3D;
 // #define TEXTURES_UVB_INTERPOLATION
 
 struct Chemistry_Header {
+
   Real gamma;
-  Real density_conversion;
-  Real energy_conversion;
-  Real current_z;
   Real runtime_chemistry_step;
   Real H_fraction;
 
   // Units system
-  Real a_value;
-  Real density_units;
-  Real energy_units;
-  Real length_units;
-  Real time_units;
+  Real a_value;             //current scale factor
+  Real density_units;       //density units to physical cgs
+  Real energy_units;        //
+  Real length_units;        //length scale to physical cm
+  Real time_units;          //time scale in s
+  Real density_conversion;
+  Real energy_conversion;
+  Real current_z;
+
   //Real dens_base;
   //Real length_base;
   //Real time_base;
@@ -156,18 +158,31 @@ class Chem_GPU
 
   void Generate_Reaction_Rate_Table(Real **rate_table_array_d, Rate_Function_T rate_function, Real units);
 
+  //creates the cooling rate tables
+  //for collisional ionization,
+  //collisional excitation, 
+  //recombination, and
+  //bremsstrahlung
   void Initialize_Cooling_Rates();
 
+  //creates the reaction rate tables
+  //for collisions and recombinations
   void Initialize_Reaction_Rates();
 
+  //loads the uvb rates from file and
+  //copies them to the gpu
   void Initialize_UVB_Ionization_and_Heating_Rates(struct parameters *P);
 
+  //loads the uvb rates from a file
   void Load_UVB_Ionization_and_Heating_Rates(struct parameters *P);
 
+  //Copies chemistry uvb rate arrays to GPU
   void Copy_UVB_Rates_to_GPU();
 
+  //Free chemistry rate arrays
   void Reset();
 
+  //print the chemistry units to stdout
   int chprintf_chemistry_units();
 
   #ifdef TEXTURES_UVB_INTERPOLATION

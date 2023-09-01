@@ -8,50 +8,60 @@
   #include "rates.cuh"
   #include "rates_Katz95.cuh"
 
-  #define eV_to_K 1.160451812e4
-  #define K_to_eV 8.617333263e-5
-  #define n_min   1e-20
-  #define tiny    1e-20
+//  #define eV_to_K 1.160451812e4
+//  #define K_to_eV 8.617333263e-5
+//  #define n_min   1e-20
+//  #define TINY_NUMBER    1e-20
 
   #define TPB_CHEM 256
 
+//Allocate a floating point array on the gpu
 void Chem_GPU::Allocate_Array_GPU_float(float **array_dev, int size)
 {
   CudaSafeCall(cudaMalloc((void **)array_dev, size * sizeof(float)));
 }
 
+//Copy a floating point array from the cpu to the gpu
 void Chem_GPU::Copy_Float_Array_to_Device(int size, float *array_h, float *array_d)
 {
   CudaSafeCall(cudaMemcpy(array_d, array_h, size * sizeof(float), cudaMemcpyHostToDevice));
   cudaDeviceSynchronize();
 }
 
+//Free an array allocated on the gpu
 void Chem_GPU::Free_Array_GPU_float(float *array_dev) { CudaSafeCall(cudaFree(array_dev)); }
 
+
+//Allocate a Real array on the gpu
 void Chem_GPU::Allocate_Array_GPU_Real(Real **array_dev, int size)
 {
   CudaSafeCall(cudaMalloc((void **)array_dev, size * sizeof(Real)));
 }
 
+//Copy a Real array from the cpu to the gpu
 void Chem_GPU::Copy_Real_Array_to_Device(int size, Real *array_h, Real *array_d)
 {
   CudaSafeCall(cudaMemcpy(array_d, array_h, size * sizeof(Real), cudaMemcpyHostToDevice));
   cudaDeviceSynchronize();
 }
 
+//Free a Real array on the gpu
 void Chem_GPU::Free_Array_GPU_Real(Real *array_dev) { CudaSafeCall(cudaFree(array_dev)); }
 
+
+//compute the thermal state
+//of a cell based on its ionization state
 class Thermal_State
 {
  public:
-  Real U;
-  Real d;
-  Real d_HI;
-  Real d_HII;
-  Real d_HeI;
-  Real d_HeII;
-  Real d_HeIII;
-  Real d_e;
+  Real U;         //internal energy in (km/s)^2
+  Real d;         //total density
+  Real d_HI;      //neutral hydrogen density
+  Real d_HII;     //ionized hydrogen density
+  Real d_HeI;     //neutral helium density
+  Real d_HeII;    //singly ionized helium density
+  Real d_HeIII;   //doubly ionized helium density
+  Real d_e;       //electron density
 
   // Constructor
   __host__ __device__ Thermal_State(Real U_0 = 1, Real d_0 = 1, Real d_HI_0 = 1, Real d_HII_0 = 0, Real d_HeI_0 = 1,
@@ -60,6 +70,7 @@ class Thermal_State
   {
   }
 
+  //Compute the mean molecular weight
   __host__ __device__ Real get_MMW()
   {
     // Real m_tot = d_HI + d_HII + d_HeI + d_HeII + d_HeIII;
@@ -68,23 +79,34 @@ class Thermal_State
     // return m_tot / n_tot;
   }
 
+  //Compute the temperature from the internal energy
+  //mean molecular weight, proton mass, Boltzmann's constant,
+  //the adiabatic index, and converting from KM to CGS
+  //returns the temperature in Kelvin
   __host__ __device__ Real get_temperature(Real gamma)
   {
     Real mu, temp;
     mu   = get_MMW();
-    temp = (gamma - 1) * mu * U * MP / KB * 1e10;
+    temp = (gamma - 1) * mu * U * MP * (KM_CGS*KM_CGS) / KB ;
     return temp;
   }
 
+  //Compute the internal energy from the temperature in K,
+  //the adiabatic index, the mean molecular weight, the
+  //mass of the proton, Boltzmann's constant, and the 
+  //conversion from CGS to KM, returns the
+  //internal energy in (km/s)^2
   __host__ __device__ Real compute_U(Real temp, Real gamma)
   {
     Real mu, U_local;
     mu      = get_MMW();
-    U_local = temp / (gamma - 1) / mu / MP * KB / 1e10;
+    U_local = KB * temp / (gamma - 1) / mu / MP / (KM_CGS*KM_CGS);
     return U_local;
   }
 };
 
+//get the integer index and fractional index in the look up table
+//for a temperature T
 __device__ void get_temperature_indx(Real T, Chemistry_Header &Chem_H, int &temp_indx, Real &delta_T, Real temp_old,
                                      int print)
 {
@@ -104,6 +126,9 @@ __device__ void get_temperature_indx(Real T, Chemistry_Header &Chem_H, int &temp
   // if (print) printf(" logT: %f  logT_l: %f  logT_r: %f   \n", logT, logT_l, logT_r );
 }
 
+
+//perform a linear interpolation on a rate table given the integer
+//and fractional index
 __device__ Real interpolate_rate(Real *rate_table, int indx, Real delta)
 {
   Real rate_val;
@@ -166,8 +191,8 @@ __device__ Real Get_Cooling_Rates(Thermal_State &TS, Chemistry_Header &Chem_H, R
   photo_heat = (photo_h_HI * TS.d_HI + 0.25 * (photo_h_HeI * TS.d_HeI + photo_h_HeII * TS.d_HeII)) / dens_number_conv;
   U_dot += photo_heat;
 
-  if (temp <= 1.01 * Chem_H.Temp_start && fabs(U_dot) < 0) U_dot = tiny;
-  if (fabs(U_dot) < tiny) U_dot = tiny;
+  if (temp <= 1.01 * Chem_H.Temp_start && fabs(U_dot) < 0) U_dot = TINY_NUMBER;
+  if (fabs(U_dot) < TINY_NUMBER) U_dot = TINY_NUMBER;
 
   if (print > 1) printf("HI: %e  \n", TS.d_HI);
   if (print > 1) printf("HII: %e  \n", TS.d_HII);
@@ -247,6 +272,8 @@ __device__ int Binary_Search(int N, Real val, float *data, int indx_l, int indx_
   return Binary_Search(N, val, data, indx_l, indx_r);
 }
 
+
+//Another function to perform linear interpolation on a float array
 __device__ Real linear_interpolation(Real delta_x, int indx_l, int indx_r, float *array)
 {
   float v_l, v_r;
@@ -357,16 +384,16 @@ __device__ Real Get_Chemistry_dt(Thermal_State &TS, Chemistry_Header &Chem_H, Re
           photo_i_HeI * TS.d_HeI / 4.0 + photo_i_HeII * TS.d_HeII / 4.0;
 
   // Bound from below to prevent numerical errors
-  if (fabs(HI_dot) < tiny) HI_dot = fmin(tiny, TS.d_HI);
-  if (fabs(e_dot) < tiny) e_dot = fmin(tiny, TS.d_e);
+  if (fabs(HI_dot) < TINY_NUMBER) HI_dot = fmin(TINY_NUMBER, TS.d_HI);
+  if (fabs(e_dot) < TINY_NUMBER) e_dot = fmin(TINY_NUMBER, TS.d_e);
 
   // If the net rate is almost perfectly balanced then set
   // it to zero (since it is zero to available precision)
   if (fmin(fabs(k_coll_i_HI * TS.d_HI * TS.d_e), fabs(k_recomb_HII * TS.d_HII * TS.d_e)) /
           fmax(fabs(HI_dot), fabs(e_dot)) >
       1e6) {
-    HI_dot = tiny;
-    e_dot  = tiny;
+    HI_dot = TINY_NUMBER;
+    e_dot  = TINY_NUMBER;
   }
 
   if (n_iter > 50) {
@@ -382,7 +409,7 @@ __device__ Real Get_Chemistry_dt(Thermal_State &TS, Chemistry_Header &Chem_H, Re
   if (TS.get_temperature(Chem_H.gamma) < TEMP_FLOOR) TS.U = TS.compute_U(TEMP_FLOOR, Chem_H.gamma);
   #endif
 
-  energy = fmax(TS.U * TS.d, tiny);
+  energy = fmax(TS.U * TS.d, TINY_NUMBER);
   // dt = fmin( fabs( 0.1 * TS.d_HI / HI_dot ), fabs( 0.1 * TS.d_e / e_dot )  ); NG electrons should not set the
   // time-step, they are a derived quantity
   dt = fabs(0.1 * TS.d_HI / HI_dot);
@@ -459,17 +486,17 @@ __device__ void Update_Step(Thermal_State &TS, Chemistry_Header &Chem_H, Real dt
   // Record the temperature for the next step
   temp_prev = TS.get_temperature(Chem_H.gamma);
 
-  HI_dot_prev = fabs(TS.d_HI - d_HI_p) / fmax(dt, tiny);
-  TS.d_HI     = fmax(d_HI_p, tiny);
-  TS.d_HII    = fmax(d_HII_p, tiny);
-  TS.d_HeI    = fmax(d_HeI_p, tiny);
-  TS.d_HeII   = fmax(d_HeII_p, tiny);
-  TS.d_HeIII  = fmax(d_HeIII_p, 1e-5 * tiny);
+  HI_dot_prev = fabs(TS.d_HI - d_HI_p) / fmax(dt, TINY_NUMBER);
+  TS.d_HI     = fmax(d_HI_p, TINY_NUMBER);
+  TS.d_HII    = fmax(d_HII_p, TINY_NUMBER);
+  TS.d_HeI    = fmax(d_HeI_p, TINY_NUMBER);
+  TS.d_HeII   = fmax(d_HeII_p, TINY_NUMBER);
+  TS.d_HeIII  = fmax(d_HeIII_p, 1e-5 * TINY_NUMBER);
 
   // Use charge conservation to determine electron fraction
   e_dot_prev = TS.d_e;
   TS.d_e     = TS.d_HII + TS.d_HeII / 4.0 + TS.d_HeIII / 2.0;
-  e_dot_prev = fabs(TS.d_e - e_dot_prev) / fmax(dt, tiny);
+  e_dot_prev = fabs(TS.d_e - e_dot_prev) / fmax(dt, TINY_NUMBER);
 
   // Update internal energy
   TS.U += U_dot / TS.d * dt;
@@ -549,7 +576,7 @@ __global__ void Update_Chemistry_kernel(Real *dev_conserved, const Real *dev_rf,
     // dt_hydro = dt_hydro / Chem_H.time_units; NG 221126: this is a bug, integration is in code units
 
   #ifdef COSMOLOGY
-    dt_hydro *= current_a * current_a / Chem_H.H0 * 1000 * KPC_KM;
+    dt_hydro *= current_a * current_a / Chem_H.H0 * 1000 * KPC_KM;  //BRANT Check
   #endif  // COSMOLOGY
           // dt_hydro = dt_hydro * current_a * current_a / Chem_H.H0 * 1000 * KPC / Chem_H.time_units;
           //  delta_a = Chem_H.H0 * sqrt( Chem_H.Omega_M/current_a + Chem_H.Omega_L*pow(current_a, 2) ) / ( 1000 * KPC ) * dt_hydro * Chem_H.time_units;
@@ -567,12 +594,12 @@ __global__ void Update_Chemistry_kernel(Real *dev_conserved, const Real *dev_rf,
     TS.U = GE * d_inv * 1e-10;
 
     // Ceiling species
-    TS.d_HI    = fmax(TS.d_HI, tiny);
-    TS.d_HII   = fmax(TS.d_HII, tiny);
-    TS.d_HeI   = fmax(TS.d_HeI, tiny);
-    TS.d_HeII  = fmax(TS.d_HeII, tiny);
-    TS.d_HeIII = fmax(TS.d_HeIII, 1e-5 * tiny);
-    // TS.d_e     = fmax( TS.d_e,     tiny );  NG 221127: removed, no need to advect electrons, they are a derived field
+    TS.d_HI    = fmax(TS.d_HI, TINY_NUMBER);
+    TS.d_HII   = fmax(TS.d_HII, TINY_NUMBER);
+    TS.d_HeI   = fmax(TS.d_HeI, TINY_NUMBER);
+    TS.d_HeII  = fmax(TS.d_HeII, TINY_NUMBER);
+    TS.d_HeIII = fmax(TS.d_HeIII, 1e-5 * TINY_NUMBER);
+    // TS.d_e     = fmax( TS.d_e,     TINY_NUMBER );  NG 221127: removed, no need to advect electrons, they are a derived field
 
     // Use charge conservation to determine electron fraction
     TS.d_e = TS.d_HII + TS.d_HeII / 4.0 + TS.d_HeIII / 2.0;
@@ -655,7 +682,7 @@ __global__ void Update_Chemistry_kernel(Real *dev_conserved, const Real *dev_rf,
     // derived field
     d                               = d / density_conv * a3;
     //GE                              = TS.U / d_inv / energy_conv * a2 / 1e-10;
-    GE                              = TS.U / d_inv / energy_conv * a2 / 1e-10; //REPLACE 1e-10 here?
+    GE                              = TS.U / d_inv / energy_conv * a2 / 1e-10; //BRANT: REPLACE 1e-10 here?
     dev_conserved[4 * n_cells + id] = GE + E_kin;
   #ifdef DE
     dev_conserved[(n_fields - 1) * n_cells + id] = GE;
@@ -702,21 +729,21 @@ void Do_Chemistry_Update(Real *dev_conserved, const Real *dev_rf, int nx, int ny
   // Reaction and cooling rates from Grackle
 
   // Kelvin to eV conversion factor
-  #ifndef tevk
-    #define tevk 1.1605e4
-  #endif
+//  #ifndef K_EV
+//    #define K_EV 1.1605e4
+//  #endif
   // Comparison value
-  #ifndef dhuge
-    #define dhuge 1.0e30
-  #endif
+//  #ifndef HUGE_NUMBER
+//    #define HUGE_NUMBER 1.0e30
+//  #endif
   // Small value
-  #ifndef tiny
-    #define tiny 1.0e-20
-  #endif
+//  #ifndef TINY_NUMBER
+//    #define TINY_NUMBER 1.0e-20
+//  #endif
   // Boltzmann's constant
-  #ifndef kboltz
-    #define kboltz 1.3806504e-16  // Boltzmann's constant [cm2gs-2K-1] or [ergK-1]
-  #endif
+//  #ifndef KB
+//    #define KB 1.3806504e-16  // Boltzmann's constant [cm2gs-2K-1] or [ergK-1]
+//  #endif
 
 // Calculation of k1 (HI + e --> HII + 2e)
 // k1_rate
@@ -731,7 +758,7 @@ __host__ __device__ Real coll_i_HI_rate(Real T, Real units)
                 0.0001119543953861 * pow(logT_ev, 7) - 2.039149852002e-6 * pow(logT_ev, 8)) /
             units;
   if (T_ev <= 0.8) {
-    k1 = fmax(tiny, k1);
+    k1 = fmax(TINY_NUMBER, k1);
   }
   return k1;
 }
@@ -750,7 +777,7 @@ __host__ __device__ Real coll_i_HeI_rate(Real T, Real units)
                0.0002067236157507 * pow(logT_ev, 7) - 3.649161410833e-6 * pow(logT_ev, 8)) /
            units;
   } else {
-    return tiny;
+    return TINY_NUMBER;
   }
 }
 
@@ -800,12 +827,12 @@ __host__ __device__ Real recomb_HII_rate(Real T, Real units, bool use_case_B)
     if (T < 1.0e9) {
       return 4.881357e-6 * pow(T, -1.5) * pow((1.0 + 1.14813e2 * pow(T, -0.407)), -2.242) / units;
     } else {
-      return tiny;
+      return TINY_NUMBER;
     }
   } else {
     if (T > 5500) {
       // Convert temperature to appropriate form.
-      Real T_ev    = T / tevk;
+      Real T_ev    = T / K_EV;
       Real logT_ev = log(T_ev);
 
       return exp(-28.61303380689232 - 0.7241125657826851 * logT_ev - 0.02026044731984691 * pow(logT_ev, 2) -
@@ -824,7 +851,7 @@ __host__ __device__ Real recomb_HII_rate_case_A(Real T, Real units)
 {
   if (T > 5500) {
     // Convert temperature to appropriate form.
-    Real T_ev    = T / tevk;
+    Real T_ev    = T / K_EV;
     Real logT_ev = log(T_ev);
 
     return exp(-28.61303380689232 - 0.7241125657826851 * logT_ev - 0.02026044731984691 * pow(logT_ev, 2) -
@@ -845,7 +872,7 @@ __host__ __device__ Real recomb_HII_rate_case_B(Real T, Real units)
     auto ret = 4.881357e-6 * pow(T, -1.5) * pow((1.0 + 1.14813e2 * pow(T, -0.407)), -2.242);
     return ret / units;
   } else {
-    return tiny;
+    return TINY_NUMBER;
   }
 }
 
@@ -866,7 +893,7 @@ __host__ __device__ Real coll_i_HeII_rate(Real T, Real units)
              0.0001975705312221 * pow(logT_ev, 7) - 3.165581065665e-6 * pow(logT_ev, 8)) /
          units;
   } else {
-    k5 = tiny;
+    k5 = TINY_NUMBER;
   }
   return k5;
 }
@@ -881,7 +908,7 @@ __host__ __device__ Real recomb_HeIII_rate(Real T, Real units, bool use_case_B)
     if (T < 1.0e9) {
       k6 = 7.8155e-5 * pow(T, -1.5) * pow((1.0 + 2.0189e2 * pow(T, -0.407)), -2.242) / units;
     } else {
-      k6 = tiny;
+      k6 = TINY_NUMBER;
     }
   } else {
     k6 = 3.36e-10 / sqrt(T) / pow(T / 1.0e3, 0.2) / (1.0 + pow(T / 1.0e6, 0.7)) / units;
@@ -904,7 +931,7 @@ __host__ __device__ Real recomb_HeIII_rate_case_B(Real T, Real units)
   if (T < 1.0e9) {
     k6 = 7.8155e-5 * pow(T, -1.5) * pow((1.0 + 2.0189e2 * pow(T, -0.407)), -2.242) / units;
   } else {
-    k6 = tiny;
+    k6 = TINY_NUMBER;
   }
   return k6;
 }
@@ -918,7 +945,7 @@ __host__ __device__ Real coll_i_HI_HI_rate(Real T, Real units)
   if (T > 3.0e3) {
     return 1.2e-17 * pow(T, 1.2) * exp(-1.578e5 / T) / units;
   } else {
-    return tiny;
+    return TINY_NUMBER;
   }
 }
 
@@ -931,7 +958,7 @@ __host__ __device__ Real coll_i_HI_HeI_rate(Real T, Real units)
   if (T > 3.0e3) {
     return 1.75e-17 * pow(T, 1.3) * exp(-1.578e5 / T) / units;
   } else {
-    return tiny;
+    return TINY_NUMBER;
   }
 }
 
@@ -939,28 +966,28 @@ __host__ __device__ Real coll_i_HI_HeI_rate(Real T, Real units)
 //  Cooling collisional excitation HI
 __host__ __device__ Real cool_ceHI_rate(Real T, Real units)
 {
-  return 7.5e-19 * exp(-fmin(log(dhuge), 118348.0 / T)) / (1.0 + sqrt(T / 1.0e5)) / units;
+  return 7.5e-19 * exp(-fmin(log(HUGE_NUMBER), 118348.0 / T)) / (1.0 + sqrt(T / 1.0e5)) / units;
 }
 
 // Calculation of ceHeI.
 //  Cooling collisional ionization HeI
 __host__ __device__ Real cool_ceHeI_rate(Real T, Real units)
 {
-  return 9.1e-27 * exp(-fmin(log(dhuge), 13179.0 / T)) * pow(T, -0.1687) / (1.0 + sqrt(T / 1.0e5)) / units;
+  return 9.1e-27 * exp(-fmin(log(HUGE_NUMBER), 13179.0 / T)) * pow(T, -0.1687) / (1.0 + sqrt(T / 1.0e5)) / units;
 }
 
 // Calculation of ceHeII.
 //  Cooling collisional excitation HeII
 __host__ __device__ Real cool_ceHeII_rate(Real T, Real units)
 {
-  return 5.54e-17 * exp(-fmin(log(dhuge), 473638.0 / T)) * pow(T, -0.3970) / (1.0 + sqrt(T / 1.0e5)) / units;
+  return 5.54e-17 * exp(-fmin(log(HUGE_NUMBER), 473638.0 / T)) * pow(T, -0.3970) / (1.0 + sqrt(T / 1.0e5)) / units;
 }
 
 // Calculation of ciHeIS.
 //  Cooling collisional ionization HeIS
 __host__ __device__ Real cool_ciHeIS_rate(Real T, Real units)
 {
-  return 5.01e-27 * pow(T, -0.1687) / (1.0 + sqrt(T / 1.0e5)) * exp(-fmin(log(dhuge), 55338.0 / T)) / units;
+  return 5.01e-27 * pow(T, -0.1687) / (1.0 + sqrt(T / 1.0e5)) * exp(-fmin(log(HUGE_NUMBER), 55338.0 / T)) / units;
 }
 
 // Calculation of ciHI.
@@ -1021,9 +1048,9 @@ __host__ __device__ Real cool_reHeII1_rate(Real T, Real units, bool use_case_B)
 {
   Real lambdaHeII = 2.0 * 285335.0 / T;
   if (use_case_B) {
-    return 1.26e-14 * kboltz * T * pow(lambdaHeII, 0.75) / units;
+    return 1.26e-14 * KB * T * pow(lambdaHeII, 0.75) / units;
   } else {
-    return 3e-14 * kboltz * T * pow(lambdaHeII, 0.654) / units;
+    return 3e-14 * KB * T * pow(lambdaHeII, 0.654) / units;
   }
 }
 
@@ -1032,7 +1059,7 @@ __host__ __device__ Real cool_reHeII1_rate(Real T, Real units, bool use_case_B)
 __host__ __device__ Real cool_reHeII1_rate_case_A(Real T, Real units)
 {
   Real lambdaHeII = 2.0 * 285335.0 / T;
-  return 3e-14 * kboltz * T * pow(lambdaHeII, 0.654) / units;
+  return 3e-14 * KB * T * pow(lambdaHeII, 0.654) / units;
 }
 
 // Calculation of reHII.
@@ -1040,7 +1067,7 @@ __host__ __device__ Real cool_reHeII1_rate_case_A(Real T, Real units)
 __host__ __device__ Real cool_reHeII1_rate_case_B(Real T, Real units)
 {
   Real lambdaHeII = 2.0 * 285335.0 / T;
-  return 1.26e-14 * kboltz * T * pow(lambdaHeII, 0.75) / units;
+  return 1.26e-14 * KB * T * pow(lambdaHeII, 0.75) / units;
 }
 
 // Calculation of reHII2.
@@ -1048,8 +1075,8 @@ __host__ __device__ Real cool_reHeII1_rate_case_B(Real T, Real units)
 __host__ __device__ Real cool_reHeII2_rate(Real T, Real units)
 {
   // Dielectronic recombination (Cen, 1992).
-  return 1.24e-13 * pow(T, -1.5) * exp(-fmin(log(dhuge), 470000.0 / T)) *
-         (1.0 + 0.3 * exp(-fmin(log(dhuge), 94000.0 / T))) / units;
+  return 1.24e-13 * pow(T, -1.5) * exp(-fmin(log(HUGE_NUMBER), 470000.0 / T)) *
+         (1.0 + 0.3 * exp(-fmin(log(HUGE_NUMBER), 94000.0 / T))) / units;
 }
 
 // Calculation of reHIII.
