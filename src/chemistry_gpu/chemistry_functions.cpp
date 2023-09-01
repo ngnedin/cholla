@@ -521,10 +521,10 @@ void Grid3D::SetUnitsChemistry(struct parameters *P)
  */
 
 
-  Chem.ChemHead.density_conversion = Chem.ChemHead.density_units;
+  //Chem.ChemHead.density_conversion = Chem.ChemHead.density_units;
   #ifdef COSMOLOGY
   // density conversion is rho_M_0 in comoving g/cm^3
-  Chem.ChemHead.density_conversion *= pow(Chem.ChemHead.a_value,3);
+  //Chem.ChemHead.density_conversion *= pow(Chem.ChemHead.a_value,3);
 
   // energy conversion is (v_0_cosmo)^2 in cm/s
   Chem.ChemHead.energy_conversion   = Cosmo.v_0_cosmo * Cosmo.v_0_cosmo * KM_CGS * KM_CGS;  // km^2 -> cm^2 ;

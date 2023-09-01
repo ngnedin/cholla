@@ -523,8 +523,9 @@ __global__ void Update_Chemistry_kernel(Real *dev_conserved, const Real *dev_rf,
 
 
   // unit conversion
-  Real density_conversion, energy_conversion;
-  density_conversion = Chem_H.density_conversion;
+  //Real density_conversion, energy_conversion;
+  //density_conversion = Chem_H.density_conversion;
+  Real energy_conversion;
   energy_conversion  = Chem_H.energy_conversion;
 
   //rates of change
@@ -581,7 +582,7 @@ __global__ void Update_Chemistry_kernel(Real *dev_conserved, const Real *dev_rf,
     a3        = a2 * current_a;             //a^3
   #endif // COSMOLOGY
 
-    d  *= density_conversion / a3;
+    //d  *= density_conversion / a3;
     GE *= energy_conversion  / a2;
 
   #ifdef COSMOLOGY
@@ -676,7 +677,7 @@ __global__ void Update_Chemistry_kernel(Real *dev_conserved, const Real *dev_rf,
     dev_conserved[7 * n_cells + id] = TS.d_HeI   * a3;  //comoving number density
     dev_conserved[8 * n_cells + id] = TS.d_HeII  * a3;  //comoving number density
     dev_conserved[9 * n_cells + id] = TS.d_HeIII * a3;  //comoving number density
-    d                               = (d / density_conversion) * a3;
+    //d                               = (d / density_conversion) * a3;
     GE                              = TS.U * (KM_CGS*KM_CGS) / d_inv / energy_conversion * a2 ;
     dev_conserved[4 * n_cells + id] = GE + E_kin;
   #ifdef DE

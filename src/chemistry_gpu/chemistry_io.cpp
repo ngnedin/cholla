@@ -118,7 +118,7 @@ int Chem_GPU::chprintf_chemistry_units( void )
   code = chprintf("Chemistry Header density_units       %10.9e [same as DENSITY_UNIT].\n",ChemHead.density_units);
   code = chprintf("Chemistry Header energy_units        %10.9e [same as ENERGY_UNIT].\n",ChemHead.energy_units);
   code = chprintf("Chemistry Header energy_conversion   %10.9e [v_0_cosmo * * 2 * 1e10].\n",ChemHead.energy_conversion);
-  code = chprintf("Chemistry Header density_conversion  %10.9e [rho_M_0 h^2 / kpc^3 * Msun_cgs].\n",ChemHead.density_conversion);
+  //code = chprintf("Chemistry Header density_conversion  %10.9e [rho_M_0 h^2 / kpc^3 * Msun_cgs].\n",ChemHead.density_conversion);
   code = chprintf("Chemistry Header dens_number_conv    %10.9e [density_units/MH].\n",ChemHead.dens_number_conv);
   code = chprintf("Chemistry Header reaction_units      %10.9e [MH / (DENSITY_UNIT * TIME_UNIT)].\n",ChemHead.reaction_units);
   code = chprintf("Chemistry Header cooling_units       %10.9e [1e10 * MH * reaction_units].\n",ChemHead.cooling_units);

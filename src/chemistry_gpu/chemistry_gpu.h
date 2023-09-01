@@ -29,8 +29,8 @@ struct Chemistry_Header {
   Real energy_units;        //
   Real length_units;        //length scale to physical cm
   Real time_units;          //time scale in s
-  Real density_conversion;
-  Real energy_conversion;
+  //Real density_conversion;  //converts between conserved density field and ()
+  Real energy_conversion;   //converts between conserved energy field and (cm/s)^2 a^2
   Real current_z;
 
   //Real dens_base;
@@ -161,7 +161,7 @@ class Chem_GPU
   //creates the cooling rate tables
   //for collisional ionization,
   //collisional excitation, 
-  //recombination, and
+  //recombination, compton, and
   //bremsstrahlung
   void Initialize_Cooling_Rates();
 
