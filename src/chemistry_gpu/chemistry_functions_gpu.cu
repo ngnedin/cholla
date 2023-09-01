@@ -365,6 +365,9 @@ __device__ void Get_Current_Photo_Rates(Chemistry_Header &Chem_H, const Real *rf
   }
 }
 
+
+
+// Determine the chemistry timestep
 __device__ Real Get_Chemistry_dt(Thermal_State &TS, Chemistry_Header &Chem_H, Real &HI_dot, Real &e_dot, Real U_dot,
                                  Real k_coll_i_HI, Real k_coll_i_HeI, Real k_coll_i_HeII, Real k_coll_i_HI_HI,
                                  Real k_coll_i_HI_HeI, Real k_recomb_HII, Real k_recomb_HeII, Real k_recomb_HeIII,
@@ -410,8 +413,8 @@ __device__ Real Get_Chemistry_dt(Thermal_State &TS, Chemistry_Header &Chem_H, Re
   #endif
 
   energy = fmax(TS.U * TS.d, TINY_NUMBER);
-  // dt = fmin( fabs( 0.1 * TS.d_HI / HI_dot ), fabs( 0.1 * TS.d_e / e_dot )  ); NG electrons should not set the
-  // time-step, they are a derived quantity
+
+  //limit the timestep
   dt = fabs(0.1 * TS.d_HI / HI_dot);
   dt = fmin(fabs(0.1 * energy / U_dot), dt);
   dt = fmin(0.5 * dt_hydro, dt);
@@ -432,9 +435,13 @@ __device__ Real Get_Chemistry_dt(Thermal_State &TS, Chemistry_Header &Chem_H, Re
   if (print > 1) printf("dt_hydro: %e\n", dt_hydro);
   if (print > 1) printf("dt: %e\n", dt);
 
+  //return the chemistry timestep
   return dt;
 }
 
+
+// update the ionization fractions 
+// and internal energy
 __device__ void Update_Step(Thermal_State &TS, Chemistry_Header &Chem_H, Real dt, Real U_dot, Real k_coll_i_HI,
                             Real k_coll_i_HeI, Real k_coll_i_HeII, Real k_coll_i_HI_HI, Real k_coll_i_HI_HeI,
                             Real k_recomb_HII, Real k_recomb_HeII, Real k_recomb_HeIII, float photo_i_HI,
@@ -516,14 +523,11 @@ __global__ void Update_Chemistry_kernel(Real *dev_conserved, const Real *dev_rf,
 
 
   // unit conversion
-  Real density_conv, energy_conv;
-  density_conv = Chem_H.density_conversion;
-  energy_conv  = Chem_H.energy_conversion;
+  Real density_conversion, energy_conversion;
+  density_conversion = Chem_H.density_conversion;
+  energy_conversion  = Chem_H.energy_conversion;
 
-  //BRANT may be able to change this to limit the number of variables
-  //density_conv = Chem_H.density_units;
-  //energy_conv  = Chem_H.energy_units / Chem_H.density_units; //energy per unit mass
-
+  //rates of change
   Real U_dot, HI_dot, e_dot, HI_dot_prev, e_dot_prev, temp_prev;
   Real k_coll_i_HI, k_coll_i_HeI, k_coll_i_HeII, k_coll_i_HI_HI, k_coll_i_HI_HeI;
   Real k_recomb_HII, k_recomb_HeII, k_recomb_HeIII;
@@ -564,22 +568,32 @@ __global__ void Update_Chemistry_kernel(Real *dev_conserved, const Real *dev_rf,
     a2 = 1;
     a3 = 1;
 
-  //BRANT
+    //When doing cosmological integrations
+    //factors of the scale factor are needed
+    //to convert from the cosmological units
+    //to proper units.
+    //note that for density, we need factors
+    //of a^2 and for density we need factors 
+    //of a^3
   #ifdef COSMOLOGY
     current_a = 1 / (Chem_H.current_z + 1);
-    a2        = current_a * current_a;
-    a3        = a2 * current_a;
+    a2        = current_a * current_a;      //a^2
+    a3        = a2 * current_a;             //a^3
   #endif // COSMOLOGY
 
-    d  *= density_conv / a3;
-    GE *= energy_conv / a2;
-    // dt_hydro = dt_hydro / Chem_H.time_units; NG 221126: this is a bug, integration is in code units
+    d  *= density_conversion / a3;
+    GE *= energy_conversion  / a2;
 
   #ifdef COSMOLOGY
-    dt_hydro *= current_a * current_a / Chem_H.H0 * 1000 * KPC_KM;  //BRANT Check
+    //convert cosmological hydro timestep into seconds
+    //dt' = H0 dt/a^2
+    //dt = a^2 dt' / H0
+    //The chemistry H0 is in km/s/Mpc
+    //So convert 1/H0 to kpc/(km/s) and then to seconds
+    //by multiplying by the number of km in a kpc
+    dt_hydro *= current_a * current_a / Chem_H.H0 * 1000 * KPC_KM;  //dt_hydro in proper seconds
   #endif  // COSMOLOGY
-          // dt_hydro = dt_hydro * current_a * current_a / Chem_H.H0 * 1000 * KPC / Chem_H.time_units;
-          //  delta_a = Chem_H.H0 * sqrt( Chem_H.Omega_M/current_a + Chem_H.Omega_L*pow(current_a, 2) ) / ( 1000 * KPC ) * dt_hydro * Chem_H.time_units;
+
 
     // Initialize the thermal state
     Thermal_State TS;
@@ -589,9 +603,10 @@ __global__ void Update_Chemistry_kernel(Real *dev_conserved, const Real *dev_rf,
     TS.d_HeI   = dev_conserved[7 * n_cells + id] / a3;
     TS.d_HeII  = dev_conserved[8 * n_cells + id] / a3;
     TS.d_HeIII = dev_conserved[9 * n_cells + id] / a3;
-    // TS.d_e     = dev_conserved[10*n_cells + id] / a3; NG 221127: removed, no need to advect electrons, they are a
-    // derived field
-    TS.U = GE * d_inv * 1e-10;
+
+    //set the thermal state internal
+    //energy in km/s
+    TS.U = GE * d_inv / (KM_CGS*KM_CGS);
 
     // Ceiling species
     TS.d_HI    = fmax(TS.d_HI, TINY_NUMBER);
@@ -599,7 +614,6 @@ __global__ void Update_Chemistry_kernel(Real *dev_conserved, const Real *dev_rf,
     TS.d_HeI   = fmax(TS.d_HeI, TINY_NUMBER);
     TS.d_HeII  = fmax(TS.d_HeII, TINY_NUMBER);
     TS.d_HeIII = fmax(TS.d_HeIII, 1e-5 * TINY_NUMBER);
-    // TS.d_e     = fmax( TS.d_e,     TINY_NUMBER );  NG 221127: removed, no need to advect electrons, they are a derived field
 
     // Use charge conservation to determine electron fraction
     TS.d_e = TS.d_HII + TS.d_HeII / 4.0 + TS.d_HeIII / 2.0;
@@ -607,34 +621,18 @@ __global__ void Update_Chemistry_kernel(Real *dev_conserved, const Real *dev_rf,
     // Compute temperature at first iteration
     temp_prev = TS.get_temperature(Chem_H.gamma);
 
-    // if (print){
-    //   printf("current_z: %f\n", current_z );
-    //   printf("density_units: %e\n", Chem_H.density_units );
-    //   printf("lenght_units: %e\n", Chem_H.length_units );
-    //   printf("velocity_units: %e\n", Chem_H.velocity_units );
-    //   printf("time_units: %e\n", Chem_H.time_units );
-    //   printf("dom: %e \n", dens_number_conv );
-    //   printf("density: %e \n",         TS.d );
-    //   printf("HI_density: %e \n",      TS.d_HI );
-    //   printf("HII_density: %e \n",     TS.d_HII );
-    //   printf("HeI_density: %e \n",     TS.d_HeI );
-    //   printf("HeII_density: %e \n",    TS.d_HeII );
-    //   printf("HeIII_density: %e \n",   TS.d_HeIII );
-    //   printf("e_density: %e \n",       TS.d_e );
-    //   printf("internal_energy: %e \n", TS.U );
-    //   printf("energy: %e \n", TS.U*TS.d );
-    //   printf("dt_hydro: %e \n", dt_hydro / Chem_H.time_units );
-    // }
-
-    // Get the photoheating and photoionization rates at z=current_z
+    // Get the photoheating and photoionization rates at current epoch
     Get_Current_Photo_Rates(Chem_H, dev_rf, id, n_cells, photo_i_HI, photo_i_HeI, photo_i_HeII, photo_h_HI, photo_h_HeI,
                             photo_h_HeII, print);
 
+    // Perform subcycling 
     HI_dot_prev = 0;
     e_dot_prev  = 0;
     n_iter      = 0;
     t_chem      = 0;
     while (t_chem < dt_hydro) {
+
+      //BRANT: DOES THIS OVER RUN dt_hydro?  what prevents t_chem from exceeding dt_hydro?
       if (print != 0) printf("########################################## Iter %d \n", n_iter);
 
       U_dot = Get_Cooling_Rates(TS, Chem_H, Chem_H.dens_number_conv, Chem_H.current_z, temp_prev, photo_h_HI,
@@ -666,23 +664,20 @@ __global__ void Update_Chemistry_kernel(Real *dev_conserved, const Real *dev_rf,
     // Make consistent abundances with the H and He density
     correct_H  = Chem_H.H_fraction * TS.d / (TS.d_HI + TS.d_HII);
     correct_He = (1.0 - Chem_H.H_fraction) * TS.d / (TS.d_HeI + TS.d_HeII + TS.d_HeIII);
-    TS.d_HI *= correct_H;
-    TS.d_HII *= correct_H;
-    TS.d_HeI *= correct_He;
-    TS.d_HeII *= correct_He;
+    TS.d_HI    *= correct_H;
+    TS.d_HII   *= correct_H;
+    TS.d_HeI   *= correct_He;
+    TS.d_HeII  *= correct_He;
     TS.d_HeIII *= correct_He;
 
     // Write the Updated Thermal State
-    dev_conserved[5 * n_cells + id] = TS.d_HI * a3;
-    dev_conserved[6 * n_cells + id] = TS.d_HII * a3;
-    dev_conserved[7 * n_cells + id] = TS.d_HeI * a3;
-    dev_conserved[8 * n_cells + id] = TS.d_HeII * a3;
-    dev_conserved[9 * n_cells + id] = TS.d_HeIII * a3;
-    // dev_conserved[10*n_cells + id] = TS.d_e     * a3; NG 221127: removed, no need to advect electrons, they are a
-    // derived field
-    d                               = d / density_conv * a3;
-    //GE                              = TS.U / d_inv / energy_conv * a2 / 1e-10;
-    GE                              = TS.U / d_inv / energy_conv * a2 / 1e-10; //BRANT: REPLACE 1e-10 here?
+    dev_conserved[5 * n_cells + id] = TS.d_HI    * a3;  //comoving number density
+    dev_conserved[6 * n_cells + id] = TS.d_HII   * a3;  //comoving number density
+    dev_conserved[7 * n_cells + id] = TS.d_HeI   * a3;  //comoving number density
+    dev_conserved[8 * n_cells + id] = TS.d_HeII  * a3;  //comoving number density
+    dev_conserved[9 * n_cells + id] = TS.d_HeIII * a3;  //comoving number density
+    d                               = (d / density_conversion) * a3;
+    GE                              = TS.U * (KM_CGS*KM_CGS) / d_inv / energy_conversion * a2 ;
     dev_conserved[4 * n_cells + id] = GE + E_kin;
   #ifdef DE
     dev_conserved[(n_fields - 1) * n_cells + id] = GE;
@@ -727,23 +722,6 @@ void Do_Chemistry_Update(Real *dev_conserved, const Real *dev_rf, int nx, int ny
   ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
   ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
   // Reaction and cooling rates from Grackle
-
-  // Kelvin to eV conversion factor
-//  #ifndef K_EV
-//    #define K_EV 1.1605e4
-//  #endif
-  // Comparison value
-//  #ifndef HUGE_NUMBER
-//    #define HUGE_NUMBER 1.0e30
-//  #endif
-  // Small value
-//  #ifndef TINY_NUMBER
-//    #define TINY_NUMBER 1.0e-20
-//  #endif
-  // Boltzmann's constant
-//  #ifndef KB
-//    #define KB 1.3806504e-16  // Boltzmann's constant [cm2gs-2K-1] or [ergK-1]
-//  #endif
 
 // Calculation of k1 (HI + e --> HII + 2e)
 // k1_rate

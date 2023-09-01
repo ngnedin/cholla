@@ -66,10 +66,8 @@ void Grid3D::Initialize_Chemistry_Finish(struct parameters *P)
   Chem.ChemHead.dTables[0] = Rad.photoRates->bTables[0];
   Chem.ChemHead.dTables[1] = (Rad.photoRates->bTables.Count() > 1 ? Rad.photoRates->bTables[1] : nullptr);
   Chem.ChemHead.dStretch   = Rad.photoRates->bStretch.DevicePtr();
-
-  Chem.ChemHead.unitPhotoHeating    = KB * 1e-10 * Chem.ChemHead.time_units * Chem.ChemHead.density_units / MH / MH;
-  Chem.ChemHead.unitPhotoIonization = Chem.ChemHead.time_units;
   #endif  // RT
+
 
   chprintf("Allocating Memory in Initialize_Chemistry_Finish(). \n\n");
   int n_cells               = H.nx * H.ny * H.nz;
@@ -147,11 +145,11 @@ void Grid3D::Compute_Gas_Temperature(Real *temperature, bool convert_cosmo_units
       for (i = 0; i < H.nx; i++) {
         id = i + j * H.nx + k * H.nx * H.ny;
 
-        d  = C.density[id];
-        vx = C.momentum_x[id] / d;
-        vy = C.momentum_y[id] / d;
-        vz = C.momentum_z[id] / d;
-        E  = C.Energy[id];
+        d  = C.density[id];           //density in units of Msun/kpc^3
+        vx = C.momentum_x[id] / d;    //velocity in units of kpc/kyr
+        vy = C.momentum_y[id] / d;    //velocity in units of kpc/kyr
+        vz = C.momentum_z[id] / d;    //velocity in units of kpc/kyr
+        E  = C.Energy[id];            //energy in (msun/kpc^3)(kpc/kyr)^2
 
   #ifdef DE
         GE = C.GasEnergy[id];
@@ -159,22 +157,21 @@ void Grid3D::Compute_Gas_Temperature(Real *temperature, bool convert_cosmo_units
         GE = (E - 0.5 * d * (vx * vx + vy * vy + vz * vz));
   #endif
 
-        dens_HI    = C.HI_density[id];
-        dens_HII   = C.HII_density[id];
-        dens_HeI   = C.HeI_density[id];
-        dens_HeII  = C.HeII_density[id];
-        dens_HeIII = C.HeIII_density[id];
-        dens_e     = dens_HII + dens_HeII + 2 * dens_HeIII;
+        dens_HI    = C.HI_density[id];                        //number density in
+        dens_HII   = C.HII_density[id];                       //number density in 
+        dens_HeI   = C.HeI_density[id];                       //number density in 
+        dens_HeII  = C.HeII_density[id];                      //number density in
+        dens_HeIII = C.HeIII_density[id];                     //number density in 
+        dens_e     = dens_HII + dens_HeII + 2 * dens_HeIII;   //number density in 
 
         cell_dens = dens_HI + dens_HII + dens_HeI + dens_HeII + dens_HeIII;
         cell_n    = dens_HI + dens_HII + (dens_HeI + dens_HeII + dens_HeIII) / 4 + dens_e;
-        mu        = cell_dens / cell_n;
+        mu        = cell_dens / cell_n; //mean molecular weight
 
   #ifdef COSMOLOGY
         if (convert_cosmo_units) {
           current_a = Cosmo.current_a;
           a2        = current_a * current_a;
-          //GE *= Chem.ChemHead.energy_conversion / a2;
           GE *= Chem.ChemHead.energy_conversion / a2;
         } else {
           GE *= KM_CGS*KM_CGS;  // convert from (km/s)^2 to (cm/s)^2
@@ -182,10 +179,7 @@ void Grid3D::Compute_Gas_Temperature(Real *temperature, bool convert_cosmo_units
   #endif
 
         temp = GE * MP * mu / d / KB * (gamma - 1.0);
-        ;
         temperature[id] = temp;
-        // chprintf( "mu: %e \n", mu );
-        // if ( temp > 1e7 ) chprintf( "Temperature: %e   mu: %e \n", temp, mu );
       }
     }
   }
@@ -376,28 +370,6 @@ void Grid3D::SetUnitsChemistry(struct parameters *P)
   //Note we may need access to cosmology, so we use
   //a Grid3D method rather than Chem_GPU
 
-
-  //Real Msun_cgs, kpc_cgs;//, kpc_km;//, dens_to_CGS;
-  //Msun        = MSUN_CGS;
-  //Msun_cgs    = MASS_UNIT;
-  //kpc_cgs     = KPC_CGS;
-  //kpc_cgs     = LENGTH_UNIT;
-  //kpc_km     = KPC_KM;
-  //dens_to_CGS = Msun_cgs / kpc_cgs / kpc_cgs / kpc_cgs;
-  //dens_to_CGS = DENSITY_UNIT;
-  
-  //chprintf("dens_to_CGS %e DENSITY_UNIT %e\n",dens_to_CGS,DENSITY_UNIT);
-
-//#ifdef COSMOLOGY
-//dens_to_CGS = dens_to_CGS * Cosmo.rho_M_0 * Cosmo.cosmo_h * Cosmo.cosmo_h;
-
-// bruno has
-// dens_to_CGS = Cosmo.rho_M_0 * Msun / kpc_cgs / kpc_cgs / kpc_cgs * Cosmo.cosmo_h * Cosmo.cosmo_h;
-//#endif  // COSMOLOGY
-
-  //chprintf("dens_to_CGS %e DENSITY_UNIT %e\n",dens_to_CGS,DENSITY_UNIT);
-
-
   //density units are solar masses per kpc^3 in grams/cm^3
   Chem.ChemHead.density_units    = DENSITY_UNIT;
 
@@ -410,7 +382,6 @@ void Grid3D::SetUnitsChemistry(struct parameters *P)
   //dens_number_conv is number of hydrogen atoms per cm^3
   //for a density of 1 solar masses per kpc^3
   Chem.ChemHead.dens_number_conv = Chem.ChemHead.density_units / MH;
-  //Chem.ChemHead.reaction_units   = MH / (Chem.ChemHead.density_units * Chem.ChemHead.time_units);
   
 
   //set cosmology chemistry unit system if needed
@@ -425,21 +396,20 @@ void Grid3D::SetUnitsChemistry(struct parameters *P)
 #define BRUNO_CHEM_UNITS
 //
 #ifdef BRUNO_CHEM_UNITS
-  printf("BRUNO_CHEM_UNITS active\n");
+  chprintf("BRUNO_CHEM_UNITS active\n");
 #else
-  printf("BRUNO_CHEM_UNITS not active\n");
+  chprintf("BRUNO_CHEM_UNITS not active\n");
 #endif //BRUNO_CHEM_UNITS
 
 #ifdef  BRUNO_CHEM_UNITS
 
-  //rho_M_0*h^2/a^3 is the physical baryon density at scale factor a in Msun/kpc^3
-  //density_units is then physical baryon density in g/cm^3
-
+  //rho_M_0*h^2/a^3 is the proper matter density at scale factor a in Msun/kpc^3
+  //density_units is then proper matter density in g/cm^3
   Chem.ChemHead.density_units    *= Cosmo.rho_M_0*pow(Cosmo.cosmo_h,2)/pow(Chem.ChemHead.a_value,3); //physical
 
 
-  //1 physical kpc in cm
-  Chem.ChemHead.length_units     *= Chem.ChemHead.a_value/Cosmo.cosmo_h; //LENGTH_UNITS in physical cm
+  //converts 1 comoving kpc to proper cm
+  Chem.ChemHead.length_units     *= Chem.ChemHead.a_value/Cosmo.cosmo_h; //1 comoving kpc in proper cm
 
   //this time unit converts between Hubble parameter in
   //km/s/kpc to 1/s
@@ -447,10 +417,6 @@ void Grid3D::SetUnitsChemistry(struct parameters *P)
 
   //converts 
   Chem.ChemHead.dens_number_conv *= Cosmo.rho_M_0*pow(Cosmo.cosmo_h,2); //comoving, incl h
-  //Real dens_base, length_base, time_base;
-  //dens_base   = Chem.ChemHead.density_units * pow(Chem.ChemHead.a_value,3); //comoving incl h?
-  //length_base = Chem.ChemHead.length_units / Chem.ChemHead.a_value; //comoving incl h
-  //time_base   = Chem.ChemHead.time_units; // kpc in km / h ...
 #endif //BRUNO_CHEM_UNITS
 
   #endif  // COSMOLOGY
@@ -458,56 +424,59 @@ void Grid3D::SetUnitsChemistry(struct parameters *P)
   //set the chemistry velocity unit
   Chem.ChemHead.velocity_units = Chem.ChemHead.length_units / Chem.ChemHead.time_units;
 
-  //set the chemsitry energy unit
+  //set the chemistry energy unit
   Chem.ChemHead.energy_units     = Chem.ChemHead.density_units  * pow(Chem.ChemHead.velocity_units,2);
-
-  //set the chemistry reaction unit
-  //Chem.ChemHead.reaction_units = MH / (Chem.ChemHead.density_units * Chem.ChemHead.time_units);
 
   //without cosmology
   //reaction units are per number of hydrogen atoms in 1 msun per kpc^3
   //per 1 kyr expressed in cm^-3 s^-1
   Chem.ChemHead.reaction_units   = 1 / (Chem.ChemHead.dens_number_conv * Chem.ChemHead.time_units);
 
-
+  #ifdef COSMOLOGY
 #ifdef  BRUNO_CHEM_UNITS
   Chem.ChemHead.reaction_units /= pow(Chem.ChemHead.a_value,3); //comoving incl h?
 #endif //BRUNO_CHEM_UNITS
+  #endif  // COSMOLOGY
 
   //set the chemistry cooling units
   Chem.ChemHead.cooling_units  = 1.0e10 * MH * Chem.ChemHead.reaction_units;
+
+  //convert to cosmological cooling
+  #ifdef COSMOLOGY
+#ifdef  BRUNO_CHEM_UNITS
+  Chem.ChemHead.cooling_units /= pow(Chem.ChemHead.a_value,3); //comoving incl h?
+#endif //BRUNO_CHEM_UNITS
+  #endif  // COSMOLOGY
 //bruno has
-/*
-  Real Msun, kpc_cgs, kpc_km, dens_to_CGS;
-  Msun = MSUN_CGS;
-  kpc_cgs = KPC_CGS;
-  kpc_km  = KPC_KM;
-  dens_to_CGS = Cosmo.rho_M_0 * Msun / kpc_cgs / kpc_cgs / kpc_cgs * Cosmo.cosmo_h * Cosmo.cosmo_h;
+
+
+  //Real Msun, kpc_cgs, kpc_km, dens_to_CGS;
+  //Msun = MSUN_CGS;
+  //kpc_cgs = KPC_CGS;
+  //kpc_km  = KPC_KM;
+  //dens_to_CGS = Cosmo.rho_M_0 * Msun / kpc_cgs / kpc_cgs / kpc_cgs * Cosmo.cosmo_h * Cosmo.cosmo_h;
 
   // These are conversions from code units to cgs. Following Grackle
-  Chem.H.density_units  = dens_to_CGS / Chem.H.a_value / Chem.H.a_value / Chem.H.a_value ;
-  Chem.H.length_units   = kpc_cgs / Cosmo.cosmo_h * Chem.H.a_value;
-  Chem.H.time_units     = kpc_km / Cosmo.cosmo_h ;
-  Chem.H.velocity_units = Chem.H.length_units /Chem.H.time_units;
-  Chem.H.dens_number_conv = Chem.H.density_units * pow(Chem.H.a_value, 3) / MH;
-  Real dens_base, length_base, time_base;
-  dens_base   = Chem.H.density_units * Chem.H.a_value * Chem.H.a_value * Chem.H.a_value;
-  length_base = Chem.H.length_units / Chem.H.a_value;
-  time_base   = Chem.H.time_units;
-  Chem.H.cooling_units   = ( pow(length_base, 2) * pow(MH, 2) ) / ( dens_base * pow(time_base, 3) );
-  Chem.H.reaction_units = MH / (dens_base * time_base );
-*/
-/*
+  //Chem.H.density_units  = dens_to_CGS / Chem.H.a_value / Chem.H.a_value / Chem.H.a_value ;
+  //Chem.H.length_units   = kpc_cgs / Cosmo.cosmo_h * Chem.H.a_value;
+  //Chem.H.time_units     = kpc_km / Cosmo.cosmo_h ;
+  //Chem.H.velocity_units = Chem.H.length_units /Chem.H.time_units;
+  //Chem.H.dens_number_conv = Chem.H.density_units * pow(Chem.H.a_value, 3) / MH;
+  //Real dens_base, length_base, time_base;
+  //dens_base   = Chem.H.density_units * Chem.H.a_value * Chem.H.a_value * Chem.H.a_value;
+  //length_base = Chem.H.length_units / Chem.H.a_value;
+  //time_base   = Chem.H.time_units;
+  //Chem.H.cooling_units   = ( pow(length_base, 2) * pow(MH, 2) ) / ( dens_base * pow(time_base, 3) );
+  //Chem.H.reaction_units = MH / (dens_base * time_base );
+  //#ifdef COSMOLOGY
+  //Real dens_base, length_base, time_base;
+  //dens_base   = Chem.ChemHead.density_units;
+  //length_base = Chem.ChemHead.length_units;
+  //dens_base   = dens_base * Chem.ChemHead.a_value * Chem.ChemHead.a_value * Chem.ChemHead.a_value;
+  //length_base = length_base / Chem.ChemHead.a_value;
+  //time_base = Chem.ChemHead.time_units;
+  //#endif  // COSMOLOGY
 
-  #ifdef COSMOLOGY
-  Real dens_base, length_base, time_base;
-  dens_base   = Chem.ChemHead.density_units;
-  length_base = Chem.ChemHead.length_units;
-  dens_base   = dens_base * Chem.ChemHead.a_value * Chem.ChemHead.a_value * Chem.ChemHead.a_value;
-  length_base = length_base / Chem.ChemHead.a_value;
-  time_base = Chem.ChemHead.time_units;
-  #endif  // COSMOLOGY
-*/
 
   //BRANT
   //Chem.ChemHead.dens_base   = dens_base;
@@ -554,30 +523,19 @@ void Grid3D::SetUnitsChemistry(struct parameters *P)
 
   Chem.ChemHead.density_conversion = Chem.ChemHead.density_units;
   #ifdef COSMOLOGY
-  // Real kpc_cgs = KPC_CGS;
-  //Chem.ChemHead.density_conversion = Cosmo.rho_M_0 * Cosmo.cosmo_h * Cosmo.cosmo_h / pow(kpc_cgs, 3) * MSUN_CGS;
-  //Chem.ChemHead.density_conversion = Cosmo.rho_M_0 * Cosmo.cosmo_h * Cosmo.cosmo_h / pow(kpc_cgs, 3) * Msun_cgs;
-  //Chem.ChemHead.density_conversion = Cosmo.rho_M_0 * Cosmo.cosmo_h * Cosmo.cosmo_h / pow(LENGTH_UNIT, 3) * Msun_cgs;
-  //Chem.ChemHead.density_conversion = Cosmo.rho_M_0 * Cosmo.cosmo_h * Cosmo.cosmo_h / pow(LENGTH_UNIT, 3) * MASS_UNIT;
-  
   // density conversion is rho_M_0 in comoving g/cm^3
   Chem.ChemHead.density_conversion *= pow(Chem.ChemHead.a_value,3);
 
   // energy conversion is (v_0_cosmo)^2 in cm/s
   Chem.ChemHead.energy_conversion   = Cosmo.v_0_cosmo * Cosmo.v_0_cosmo * KM_CGS * KM_CGS;  // km^2 -> cm^2 ;
-
-  //Chem.ChemHead.energy_conversion   = Chem.ChemHead.energy_units / Chem.ChemHead.density_conversion; 
-
-  //Chem.ChemHead.density_units    *= Cosmo.rho_M_0*pow(Cosmo.cosmo_h,2)/pow(Chem.ChemHead.a_value,3); //physical
-  //Chem.ChemHead.length_units     *= Chem.ChemHead.a_value/Cosmo.cosmo_h; //LENGTH_UNITS in physical cm
-  //Chem.ChemHead.time_units       *= (KPC_KM/Cosmo.cosmo_h)/TIME_UNIT; //WTH
-  //Chem.ChemHead.dens_number_conv *= Cosmo.rho_M_0*pow(Cosmo.cosmo_h,2); //comoving, incl h
-
   #else                                                              // Not COSMOLOGY
-  //Chem.ChemHead.density_conversion = DENSITY_UNIT;
   Chem.ChemHead.energy_conversion  = ENERGY_UNIT / DENSITY_UNIT;  // NG: this is energy per unit mass
   #endif
 
+#ifdef RT
+  Chem.ChemHead.unitPhotoHeating    = KB * 1e-10 * Chem.ChemHead.time_units * Chem.ChemHead.density_units / MH / MH;
+  Chem.ChemHead.unitPhotoIonization = Chem.ChemHead.time_units;
+#endif //RT
 
 }
 
