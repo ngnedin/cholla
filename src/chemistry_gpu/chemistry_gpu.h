@@ -29,9 +29,8 @@ struct Chemistry_Header {
   Real energy_units;        //
   Real length_units;        //length scale to physical cm
   Real time_units;          //time scale in s
-  //Real density_conversion;  //converts between conserved density field and ()
   Real energy_conversion;   //converts between conserved energy field and (cm/s)^2 a^2
-  Real current_z;
+  Real current_z;           //current redshift
 
   //Real dens_base;
   //Real length_base;

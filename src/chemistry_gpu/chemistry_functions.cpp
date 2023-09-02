@@ -521,17 +521,19 @@ void Grid3D::SetUnitsChemistry(struct parameters *P)
  */
 
 
-  //Chem.ChemHead.density_conversion = Chem.ChemHead.density_units;
-  #ifdef COSMOLOGY
-  // density conversion is rho_M_0 in comoving g/cm^3
-  //Chem.ChemHead.density_conversion *= pow(Chem.ChemHead.a_value,3);
-
-  // energy conversion is (v_0_cosmo)^2 in cm/s
+  //define the conversion between the conserved energy field units
+  //and (cm/s)^2. In cosmology, the conserved energy field contains
+  //a factor of a^2 that is removed inside the chemistry routine
+#ifdef COSMOLOGY
+  // energy conversion is (v_0_cosmo)^2 in (cm/s)^2
   Chem.ChemHead.energy_conversion   = Cosmo.v_0_cosmo * Cosmo.v_0_cosmo * KM_CGS * KM_CGS;  // km^2 -> cm^2 ;
-  #else                                                              // Not COSMOLOGY
+#else  // Not COSMOLOGY
+  // energy conversion is just the ratio of energy and density units
   Chem.ChemHead.energy_conversion  = ENERGY_UNIT / DENSITY_UNIT;  // NG: this is energy per unit mass
-  #endif
+#endif // COSMOLOGY
 
+  //define the conversion between photoheating and photoionization
+  //for the radiative transfer calculation
 #ifdef RT
   Chem.ChemHead.unitPhotoHeating    = KB * 1e-10 * Chem.ChemHead.time_units * Chem.ChemHead.density_units / MH / MH;
   Chem.ChemHead.unitPhotoIonization = Chem.ChemHead.time_units;
