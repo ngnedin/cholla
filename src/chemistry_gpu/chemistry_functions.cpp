@@ -381,6 +381,8 @@ void Grid3D::SetUnitsChemistry(struct parameters *P)
 
   //dens_number_conv is number of hydrogen atoms per cm^3
   //for a density of 1 solar masses per kpc^3
+  //multiply to convert to cgs
+  //divide to convert from cgs to code units
   Chem.ChemHead.dens_number_conv = Chem.ChemHead.density_units / MH;
   
 
@@ -415,8 +417,8 @@ void Grid3D::SetUnitsChemistry(struct parameters *P)
   //km/s/kpc to 1/s
   Chem.ChemHead.time_units       *= (Cosmo.time_conversion/Cosmo.cosmo_h)/TIME_UNIT; //convert Hubble from km/s/kpc to 1/s
 
-  //converts 
-  Chem.ChemHead.dens_number_conv *= Cosmo.rho_M_0*pow(Cosmo.cosmo_h,2); //comoving, incl h
+  //converts from cosmological code units to cgs number density
+  Chem.ChemHead.dens_number_conv *= Cosmo.rho_M_0*pow(Cosmo.cosmo_h,2);
 #endif //BRUNO_CHEM_UNITS
 
   #endif  // COSMOLOGY
@@ -430,23 +432,26 @@ void Grid3D::SetUnitsChemistry(struct parameters *P)
   //without cosmology
   //reaction units are per number of hydrogen atoms in 1 msun per kpc^3
   //per 1 kyr expressed in cm^-3 s^-1
+  //Converts code units to per cm^3 per s
   Chem.ChemHead.reaction_units   = 1 / (Chem.ChemHead.dens_number_conv * Chem.ChemHead.time_units);
 
-  #ifdef COSMOLOGY
-#ifdef  BRUNO_CHEM_UNITS
+#ifdef COSMOLOGY
+#ifdef BRUNO_CHEM_UNITS
+  // divides out a factor of a^3
   Chem.ChemHead.reaction_units /= pow(Chem.ChemHead.a_value,3); //comoving incl h?
 #endif //BRUNO_CHEM_UNITS
-  #endif  // COSMOLOGY
+#endif // COSMOLOGY
 
-  //set the chemistry cooling units
-  Chem.ChemHead.cooling_units  = 1.0e10 * MH * Chem.ChemHead.reaction_units;
+  //set the chemistry cooling units, ergs per cm^3 per s^2
+  Chem.ChemHead.cooling_units  = (KM_CGS*KM_CGS) * MH * Chem.ChemHead.reaction_units;
 
   //convert to cosmological cooling
-  #ifdef COSMOLOGY
-#ifdef  BRUNO_CHEM_UNITS
+#ifdef COSMOLOGY
+#ifdef BRUNO_CHEM_UNITS
+  // divides out a factor of a^3
   Chem.ChemHead.cooling_units /= pow(Chem.ChemHead.a_value,3); //comoving incl h?
-#endif //BRUNO_CHEM_UNITS
-  #endif  // COSMOLOGY
+#endif // BRUNO_CHEM_UNITS
+#endif // COSMOLOGY
 //bruno has
 
 
@@ -497,9 +502,9 @@ void Grid3D::SetUnitsChemistry(struct parameters *P)
 //Chem.H.reaction_units = MH / (dens_base * time_base );
 
   //BRANT
-  Chem.ChemHead.ion_units  = Chem.ChemHead.time_units;
+  Chem.ChemHead.ion_units  = Chem.ChemHead.time_units; //only used in converting tables?
   Chem.ChemHead.eV_to_ergs = EV_CGS;                                                 //eV in ergs
-  Chem.ChemHead.heat_units = Chem.ChemHead.eV_to_ergs / Chem.ChemHead.cooling_units;
+  Chem.ChemHead.heat_units = Chem.ChemHead.eV_to_ergs / Chem.ChemHead.cooling_units; //only used in converting tables?
 
   //chprintf("ion_units %e\n",Chem.ChemHead.ion_units);
   //chexit(0);
@@ -535,7 +540,7 @@ void Grid3D::SetUnitsChemistry(struct parameters *P)
   //define the conversion between photoheating and photoionization
   //for the radiative transfer calculation
 #ifdef RT
-  Chem.ChemHead.unitPhotoHeating    = KB * 1e-10 * Chem.ChemHead.time_units * Chem.ChemHead.density_units / MH / MH;
+  Chem.ChemHead.unitPhotoHeating    = KB * Chem.ChemHead.time_units * Chem.ChemHead.density_units / MH / MH / (KM_CGS*KM_CGS);
   Chem.ChemHead.unitPhotoIonization = Chem.ChemHead.time_units;
 #endif //RT
 
