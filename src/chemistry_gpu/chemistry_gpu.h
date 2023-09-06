@@ -39,9 +39,7 @@ struct Chemistry_Header {
   Real cooling_units;
   Real reaction_units;
   Real dens_number_conv;
-  Real eV_to_ergs;
   Real heat_units;
-\  //eV_to_ergs = 1.60218e-12;
   // heat_units_old = eV_to_ergs / ChemHead.cooling_units;  /// NG 221127: this is incorrect
   //   heat_units = eV_to_ergs * 1e-10 * ChemHead.time_units * ChemHead.density_units / MH / MH;
 

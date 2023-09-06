@@ -490,6 +490,7 @@ void Grid3D::SetUnitsChemistry(struct parameters *P)
 
   /// Chem.ChemHead.cooling_units   = ( pow(length_base, 2) * pow(MH, 2) ) / ( dens_base * pow(time_base, 3) ); NG 221127 -
   /// this is incorrect
+  // includes velocity scale in cosmo
   //Chem.ChemHead.cooling_units  = 1.0e10 * MH * MH / (dens_base * time_base);  // NG 221127 - fixed
   //Chem.ChemHead.reaction_units = MH / (dens_base * time_base);
   //Chem.ChemHead.reaction_units = MH / (Chem.ChemHead.density_units * Chem.ChemHead.time_units);
@@ -502,8 +503,7 @@ void Grid3D::SetUnitsChemistry(struct parameters *P)
 //Chem.H.reaction_units = MH / (dens_base * time_base );
 
   //BRANT
-  Chem.ChemHead.eV_to_ergs = EV_CGS;                                                 //eV in ergs
-  Chem.ChemHead.heat_units = Chem.ChemHead.eV_to_ergs / Chem.ChemHead.cooling_units; //only used in converting tables?
+  Chem.ChemHead.heat_units = EV_CGS / Chem.ChemHead.cooling_units; //only used in converting tables?
 
 
   //Chem.ChemHead.heat_units = Chem.ChemHead.eV_to_ergs * 1.0e-10 * Chem.ChemHead.time_units * Chem.ChemHead.density_units / MH / MH;
@@ -514,8 +514,6 @@ void Grid3D::SetUnitsChemistry(struct parameters *P)
 
 // Bruno has
 /*
- *   Real eV_to_ergs, heat_units;
- *   eV_to_ergs = 1.60218e-12;
  *   heat_units = eV_to_ergs / H.cooling_units;
  *   in chemistry_io.cpp... 
  *       Ion_rates_HI_h[i]    = v[i][1] * ion_units;
