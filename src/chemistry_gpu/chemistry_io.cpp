@@ -61,20 +61,18 @@ void Chem_GPU::Load_UVB_Ionization_and_Heating_Rates(struct parameters *P)
   Ion_rates_HeI_h   = (float *)malloc(sizeof(float) * n_lines);
   Ion_rates_HeII_h  = (float *)malloc(sizeof(float) * n_lines);
 
-  //Real eV_to_ergs, heat_units, ion_units;
-  //Real heat_units, ion_units;
+  //Real eV_to_ergs, heat_units;
+  //Real heat_units;
   //eV_to_ergs = 1.60218e-12;
   // heat_units_old = eV_to_ergs / ChemHead.cooling_units;  /// NG 221127: this is incorrect
   //heat_units = eV_to_ergs * 1e-10 * ChemHead.time_units * ChemHead.density_units / MH / MH;
   //heat_units = EV_CGS * 1e-10 * ChemHead.time_units * ChemHead.density_units / MH / MH;
-  //ion_units  = ChemHead.time_units;
 
   //chprintf("ChemHead.cooling_units %10.9e\n",ChemHead.cooling_units);
   //chprintf("heat_units %10.9e\n",heat_units);
-  //chprintf("ion_units  %10.9e\n",ion_units);
   //chprintf("eV_to_ergs [electron volts in cgs] %10.9e ergs.\n",eV_to_ergs);
 
-  Real ion_units  = ChemHead.ion_units;
+  Real ion_units  = ChemHead.unitPhotoIonization;
   Real heat_units = ChemHead.heat_units;
   for (i = 0; i < n_lines; i++) {
     rates_z_h[i]         = v[i][0]; //redshift
@@ -122,7 +120,6 @@ int Chem_GPU::chprintf_chemistry_units( void )
   code = chprintf("Chemistry Header reaction_units      %10.9e [MH / (DENSITY_UNIT * TIME_UNIT)].\n",ChemHead.reaction_units);
   code = chprintf("Chemistry Header cooling_units       %10.9e [1e10 * MH * reaction_units].\n",ChemHead.cooling_units);
   code = chprintf("Chemistry Header heat_units          %10.9e [eV_to_ergs / cooling_units].\n",ChemHead.heat_units);
-  code = chprintf("Chemistry Header ion_units           %10.9e [same as TIME_UNIT].\n",ChemHead.ion_units);
   code = chprintf("Chemistry Header eV_to_ergs          %10.9e [electron volts in cgs].\n",ChemHead.eV_to_ergs);
 #ifdef RT
   code = chprintf("Chemistry Header unitPhotoHeating    %10.9e [kb * 1e-10 *time_units*density_units/MH/MH].\n",ChemHead.unitPhotoHeating);
@@ -153,10 +150,6 @@ int Chem_GPU::chprintf_chemistry_units( void )
     photo_h_HeII = linear_interpolation(delta_x, indx_l, indx_l + 1, Chem_H.photo_heat_HeII_rate_d);
 */
 
-  //chprintf("ChemHead.cooling_units %10.9e\n",ChemHead.cooling_units);
-  //  //chprintf("heat_units %10.9e\n",heat_units);
-  //    //chprintf("ion_units  %10.9e\n",ion_units);
-  //      //chprintf("eV_to_ergs [electron volts in cgs] %10.9e ergs.\n",eV_to_ergs);
   code = chprintf("\n********\n");
 
   return code;

@@ -41,11 +41,9 @@ struct Chemistry_Header {
   Real dens_number_conv;
   Real eV_to_ergs;
   Real heat_units;
-  Real ion_units;
-  //eV_to_ergs = 1.60218e-12;
+\  //eV_to_ergs = 1.60218e-12;
   // heat_units_old = eV_to_ergs / ChemHead.cooling_units;  /// NG 221127: this is incorrect
   //   heat_units = eV_to_ergs * 1e-10 * ChemHead.time_units * ChemHead.density_units / MH / MH;
-  //     ion_units  = ChemHead.time_units;
 
   // Hubble parameter
   Real H0;
@@ -94,11 +92,12 @@ struct Chemistry_Header {
   float *photo_heat_HeI_rate_d;
   float *photo_heat_HeII_rate_d;
 
+
+  Real unitPhotoIonization; //converts per sec to code units
 #ifdef RT
   const StaticTableGPU<float, 3, 'x'> *dTables[2];
   const PhotoRateTableStretchCSI *dStretch;
   Real unitPhotoHeating;
-  Real unitPhotoIonization;
 #endif
 };
 

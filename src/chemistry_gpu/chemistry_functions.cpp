@@ -265,35 +265,35 @@ void Chem_GPU::Initialize_Reaction_Rates()
   //create the unit system for
   //reactions. Here, reaction_units
   //are BRANT: complete
-  Real units = ChemHead.reaction_units;
+  Real reaction_units = ChemHead.reaction_units;
 
   //create reaction rates for collisional
   //ionization
-  Generate_Reaction_Rate_Table(&ChemHead.k_coll_i_HI_d, coll_i_HI_rate, units);
-  Generate_Reaction_Rate_Table(&ChemHead.k_coll_i_HeI_d, coll_i_HeI_rate, units);
-  Generate_Reaction_Rate_Table(&ChemHead.k_coll_i_HeII_d, coll_i_HeII_rate, units);
-  Generate_Reaction_Rate_Table(&ChemHead.k_coll_i_HI_HI_d, coll_i_HI_HI_rate, units);
-  Generate_Reaction_Rate_Table(&ChemHead.k_coll_i_HI_HeI_d, coll_i_HI_HeI_rate, units);
+  Generate_Reaction_Rate_Table(&ChemHead.k_coll_i_HI_d, coll_i_HI_rate, reaction_units);
+  Generate_Reaction_Rate_Table(&ChemHead.k_coll_i_HeI_d, coll_i_HeI_rate, reaction_units);
+  Generate_Reaction_Rate_Table(&ChemHead.k_coll_i_HeII_d, coll_i_HeII_rate, reaction_units);
+  Generate_Reaction_Rate_Table(&ChemHead.k_coll_i_HI_HI_d, coll_i_HI_HI_rate, reaction_units);
+  Generate_Reaction_Rate_Table(&ChemHead.k_coll_i_HI_HeI_d, coll_i_HI_HeI_rate, reaction_units);
 
   //create the reaction rates for
   //recombinations
   switch (recombination_case) {
     case 0: {
-      Generate_Reaction_Rate_Table(&ChemHead.k_recomb_HII_d, recomb_HII_rate_case_A, units);
-      Generate_Reaction_Rate_Table(&ChemHead.k_recomb_HeII_d, recomb_HeII_rate_case_A, units);
-      Generate_Reaction_Rate_Table(&ChemHead.k_recomb_HeIII_d, recomb_HeIII_rate_case_A, units);
+      Generate_Reaction_Rate_Table(&ChemHead.k_recomb_HII_d, recomb_HII_rate_case_A, reaction_units);
+      Generate_Reaction_Rate_Table(&ChemHead.k_recomb_HeII_d, recomb_HeII_rate_case_A, reaction_units);
+      Generate_Reaction_Rate_Table(&ChemHead.k_recomb_HeIII_d, recomb_HeIII_rate_case_A, reaction_units);
       break;
     }
     case 1: {
-      Generate_Reaction_Rate_Table(&ChemHead.k_recomb_HII_d, recomb_HII_rate_case_B, units);
-      Generate_Reaction_Rate_Table(&ChemHead.k_recomb_HeII_d, recomb_HeII_rate_case_B, units);
-      Generate_Reaction_Rate_Table(&ChemHead.k_recomb_HeIII_d, recomb_HeIII_rate_case_B, units);
+      Generate_Reaction_Rate_Table(&ChemHead.k_recomb_HII_d, recomb_HII_rate_case_B, reaction_units);
+      Generate_Reaction_Rate_Table(&ChemHead.k_recomb_HeII_d, recomb_HeII_rate_case_B, reaction_units);
+      Generate_Reaction_Rate_Table(&ChemHead.k_recomb_HeIII_d, recomb_HeIII_rate_case_B, reaction_units);
       break;
     }
     case 2: {
-      Generate_Reaction_Rate_Table(&ChemHead.k_recomb_HII_d, recomb_HII_rate_case_Iliev1, units);
-      Generate_Reaction_Rate_Table(&ChemHead.k_recomb_HeII_d, recomb_HeII_rate_case_B, units);
-      Generate_Reaction_Rate_Table(&ChemHead.k_recomb_HeIII_d, recomb_HeIII_rate_case_B, units);
+      Generate_Reaction_Rate_Table(&ChemHead.k_recomb_HII_d, recomb_HII_rate_case_Iliev1, reaction_units);
+      Generate_Reaction_Rate_Table(&ChemHead.k_recomb_HeII_d, recomb_HeII_rate_case_B, reaction_units);
+      Generate_Reaction_Rate_Table(&ChemHead.k_recomb_HeIII_d, recomb_HeIII_rate_case_B, reaction_units);
       break;
     }
   }
@@ -502,12 +502,10 @@ void Grid3D::SetUnitsChemistry(struct parameters *P)
 //Chem.H.reaction_units = MH / (dens_base * time_base );
 
   //BRANT
-  Chem.ChemHead.ion_units  = Chem.ChemHead.time_units; //only used in converting tables?
   Chem.ChemHead.eV_to_ergs = EV_CGS;                                                 //eV in ergs
   Chem.ChemHead.heat_units = Chem.ChemHead.eV_to_ergs / Chem.ChemHead.cooling_units; //only used in converting tables?
 
-  //chprintf("ion_units %e\n",Chem.ChemHead.ion_units);
-  //chexit(0);
+
   //Chem.ChemHead.heat_units = Chem.ChemHead.eV_to_ergs * 1.0e-10 * Chem.ChemHead.time_units * Chem.ChemHead.density_units / MH / MH;
   //    // heat_units_old = eV_to_ergs / ChemHead.cooling_units;  /// NG 221127: this is incorrect
   //      heat_units = eV_to_ergs * 1e-10 * ChemHead.time_units * ChemHead.density_units / MH / MH;
@@ -516,10 +514,9 @@ void Grid3D::SetUnitsChemistry(struct parameters *P)
 
 // Bruno has
 /*
- *   Real eV_to_ergs, heat_units, ion_units;
+ *   Real eV_to_ergs, heat_units;
  *   eV_to_ergs = 1.60218e-12;
  *   heat_units = eV_to_ergs / H.cooling_units;
- *   ion_units  = H.time_units;
  *   in chemistry_io.cpp... 
  *       Ion_rates_HI_h[i]    = v[i][1] * ion_units;
  *           Heat_rates_HI_h[i]   = v[i][2] * heat_units;
@@ -541,8 +538,10 @@ void Grid3D::SetUnitsChemistry(struct parameters *P)
   //for the radiative transfer calculation
 #ifdef RT
   Chem.ChemHead.unitPhotoHeating    = KB * Chem.ChemHead.time_units * Chem.ChemHead.density_units / MH / MH / (KM_CGS*KM_CGS);
-  Chem.ChemHead.unitPhotoIonization = Chem.ChemHead.time_units;
 #endif //RT
+
+  //Photo ionization units -- conver per second to per kyr in sec
+  Chem.ChemHead.unitPhotoIonization = Chem.ChemHead.time_units;
 
 }
 
