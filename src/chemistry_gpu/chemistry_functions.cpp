@@ -419,7 +419,7 @@ void Grid3D::SetUnitsChemistry(struct parameters *P)
   Chem.ChemHead.time_units       *= (Cosmo.time_conversion/Cosmo.cosmo_h)/TIME_UNIT; //convert Hubble from km/s/kpc to 1/s
 
   //converts from cosmological code units to cgs number density
-  Chem.ChemHead.dens_number_conv *= Cosmo.rho_M_0*pow(Cosmo.cosmo_h,2)*pow(Chem.ChemHead.a_value,3); //comoving but incl h^2
+  Chem.ChemHead.dens_number_conv *= Cosmo.rho_M_0*pow(Cosmo.cosmo_h,2); //comoving but incl h^2
 #endif //BRUNO_CHEM_UNITS
 
 #endif  // COSMOLOGY
@@ -434,7 +434,7 @@ void Grid3D::SetUnitsChemistry(struct parameters *P)
   //reaction units are per number of hydrogen atoms in 1 msun per kpc^3
   //per 1 kyr expressed in cm^-3 s^-1
   //Converts code units to per cm^3 per s
-  Chem.ChemHead.reaction_units   = 1 / (Chem.ChemHead.dens_number_conv * Chem.ChemHead.time_units);
+  Chem.ChemHead.reaction_units   = 1 / (Chem.ChemHead.dens_number_conv * pow(Chem.ChemHead.a_value,3) * Chem.ChemHead.time_units);
 
   //set the chemistry cooling units, ergs per cm^3 per s
   Chem.ChemHead.cooling_units  = (KM_CGS*KM_CGS) * MH * Chem.ChemHead.reaction_units;
