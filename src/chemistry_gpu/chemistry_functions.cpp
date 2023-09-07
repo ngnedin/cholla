@@ -396,16 +396,6 @@ void Grid3D::SetUnitsChemistry(struct parameters *P)
   //note Chemistry Header H0 is in km/s/Mpc
   Chem.ChemHead.H0               = P->H0;
 
-#define BRUNO_CHEM_UNITS
-//
-#ifdef BRUNO_CHEM_UNITS
-  chprintf("BRUNO_CHEM_UNITS active\n");
-#else
-  chprintf("BRUNO_CHEM_UNITS not active\n");
-#endif //BRUNO_CHEM_UNITS
-
-#ifdef BRUNO_CHEM_UNITS
-
   //rho_M_0*h^2/a^3 is the proper matter density at scale factor a in Msun/kpc^3
   //density_units is then proper matter density in g/cm^3
   Chem.ChemHead.density_units    *= Cosmo.rho_M_0*pow(Cosmo.cosmo_h,2)/pow(Chem.ChemHead.a_value,3); //physical
@@ -420,8 +410,6 @@ void Grid3D::SetUnitsChemistry(struct parameters *P)
 
   //converts from cosmological code units to cgs number density
   Chem.ChemHead.dens_number_conv *= Cosmo.rho_M_0*pow(Cosmo.cosmo_h,2); //comoving but incl h^2
-#endif //BRUNO_CHEM_UNITS
-
 #endif  // COSMOLOGY
 
   //set the chemistry velocity unit
