@@ -200,9 +200,9 @@ void Chem_GPU::Initialize(struct parameters *P)
   //and set their units
   Initialize_Reaction_Rates();
 
-  #ifndef RT //need to work out how to include this -- BRANT
+#ifdef COSMOLOGY
   Initialize_UVB_Ionization_and_Heating_Rates(P);
-  #endif  // RT
+#endif  // ENDIF
 }
 
   //creates the cooling rate tables
@@ -342,7 +342,8 @@ void Chem_GPU::Copy_UVB_Rates_to_GPU()
 // Free chemistry rate arrays 
 void Chem_GPU::Reset()
 {
-  #ifndef RT //need to work out how to include this -- BRANT
+
+#ifdef COSMOLOGY
   free(rates_z_h);
   free(Heat_rates_HI_h);
   free(Heat_rates_HeI_h);
@@ -358,7 +359,7 @@ void Chem_GPU::Reset()
   Free_Array_GPU_float(Ion_rates_HI_d);
   Free_Array_GPU_float(Ion_rates_HeI_d);
   Free_Array_GPU_float(Ion_rates_HeII_d);
-  #endif
+#endif //COSMOLOGY
   free(Fields.temperature_h);
 }
 
@@ -403,7 +404,7 @@ void Grid3D::SetUnitsChemistry(struct parameters *P)
   chprintf("BRUNO_CHEM_UNITS not active\n");
 #endif //BRUNO_CHEM_UNITS
 
-#ifdef  BRUNO_CHEM_UNITS
+#ifdef BRUNO_CHEM_UNITS
 
   //rho_M_0*h^2/a^3 is the proper matter density at scale factor a in Msun/kpc^3
   //density_units is then proper matter density in g/cm^3
@@ -418,7 +419,7 @@ void Grid3D::SetUnitsChemistry(struct parameters *P)
   Chem.ChemHead.time_units       *= (Cosmo.time_conversion/Cosmo.cosmo_h)/TIME_UNIT; //convert Hubble from km/s/kpc to 1/s
 
   //converts from cosmological code units to cgs number density
-  Chem.ChemHead.dens_number_conv *= Cosmo.rho_M_0*pow(Cosmo.cosmo_h,2);
+  Chem.ChemHead.dens_number_conv *= Cosmo.rho_M_0*pow(Cosmo.cosmo_h,2)*pow(Chem.ChemHead.a_value,3); //comoving but incl h^2
 #endif //BRUNO_CHEM_UNITS
 
 #endif  // COSMOLOGY
@@ -463,7 +464,6 @@ void Grid3D::SetUnitsChemistry(struct parameters *P)
 
   //Photo ionization units -- convert per second to per kyr in sec
   Chem.ChemHead.unitPhotoIonization = Chem.ChemHead.time_units;
-
 }
 
 

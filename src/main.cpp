@@ -186,10 +186,14 @@ int main(int argc, char *argv[])
 #endif
 
 
+  MPI_Barrier(MPI_COMM_WORLD);
+  fflush(stdout);
+
   //record what unit system was used
   G.Show_Units(&P);
 
-  //fflush(stdout);
+  MPI_Barrier(MPI_COMM_WORLD);
+  fflush(stdout);
   //chexit(0);
 
 

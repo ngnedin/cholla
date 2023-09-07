@@ -92,10 +92,10 @@ struct Chemistry_Header {
 
 
   Real unitPhotoIonization; //converts per sec to code units
+  Real unitPhotoHeating;    //converts s per cm^3 per erg to code units
 #ifdef RT
   const StaticTableGPU<float, 3, 'x'> *dTables[2];
   const PhotoRateTableStretchCSI *dStretch;
-  Real unitPhotoHeating;
 #endif
 };
 

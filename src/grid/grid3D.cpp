@@ -639,6 +639,7 @@ int Grid3D::Show_Units(struct parameters *P)
   Chem.chprintf_chemistry_units();
 #endif //CHEMISTRY_GPU
 
+  fflush(stdout);
 
   return code;
 }
