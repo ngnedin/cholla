@@ -26,7 +26,7 @@ typedef double Real;
 #define HUGE_NUMBER 1.0e30
 #define PI          3.141592653589793
 #define MP          1.67262192369e-24  // mass of proton, grams, from NIST
-#define KB          1.380649e-16  // boltzmann constant, cgs, from NIST
+#define KB          1.380649e-16  // boltzmann constant, erg K^-1 in cgs, from NIST
 //#define GN 6.67259e-8 // gravitational constant, cgs
 //#define GN  4.49451e-18  // gravitational constant, kpc^3 / M_sun / kyr^2
 #define GN_CGS 6.67430e-8 //cm^3 /g /s^2 from NIST

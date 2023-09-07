@@ -217,43 +217,43 @@ void Chem_GPU::Initialize_Cooling_Rates()
   //create the unit system for
   //cooling. Here, cooling units
   //are BRANT: complete
-  Real units = ChemHead.cooling_units;
+  Real cooling_units = ChemHead.cooling_units;
 
 
   //create collisional excitation rates
-  Generate_Reaction_Rate_Table(&ChemHead.cool_ceHI_d, cool_ceHI_rate, units);
-  Generate_Reaction_Rate_Table(&ChemHead.cool_ceHeI_d, cool_ceHeI_rate, units);
-  Generate_Reaction_Rate_Table(&ChemHead.cool_ceHeII_d, cool_ceHeII_rate, units);
+  Generate_Reaction_Rate_Table(&ChemHead.cool_ceHI_d, cool_ceHI_rate, cooling_units);
+  Generate_Reaction_Rate_Table(&ChemHead.cool_ceHeI_d, cool_ceHeI_rate, cooling_units);
+  Generate_Reaction_Rate_Table(&ChemHead.cool_ceHeII_d, cool_ceHeII_rate, cooling_units);
 
   //create collisional ionization rates
-  Generate_Reaction_Rate_Table(&ChemHead.cool_ciHI_d, cool_ciHI_rate, units);
-  Generate_Reaction_Rate_Table(&ChemHead.cool_ciHeI_d, cool_ciHeI_rate, units);
-  Generate_Reaction_Rate_Table(&ChemHead.cool_ciHeII_d, cool_ciHeII_rate, units);
-  Generate_Reaction_Rate_Table(&ChemHead.cool_ciHeIS_d, cool_ciHeIS_rate, units);
+  Generate_Reaction_Rate_Table(&ChemHead.cool_ciHI_d, cool_ciHI_rate, cooling_units);
+  Generate_Reaction_Rate_Table(&ChemHead.cool_ciHeI_d, cool_ciHeI_rate, cooling_units);
+  Generate_Reaction_Rate_Table(&ChemHead.cool_ciHeII_d, cool_ciHeII_rate, cooling_units);
+  Generate_Reaction_Rate_Table(&ChemHead.cool_ciHeIS_d, cool_ciHeIS_rate, cooling_units);
 
   //create recombination rates
   switch (recombination_case) {
     case 0: {
-      Generate_Reaction_Rate_Table(&ChemHead.cool_reHII_d, cool_reHII_rate_case_A, units);
-      Generate_Reaction_Rate_Table(&ChemHead.cool_reHeII1_d, cool_reHeII1_rate_case_A, units);
-      Generate_Reaction_Rate_Table(&ChemHead.cool_reHeIII_d, cool_reHeIII_rate_case_A, units);
+      Generate_Reaction_Rate_Table(&ChemHead.cool_reHII_d, cool_reHII_rate_case_A, cooling_units);
+      Generate_Reaction_Rate_Table(&ChemHead.cool_reHeII1_d, cool_reHeII1_rate_case_A, cooling_units);
+      Generate_Reaction_Rate_Table(&ChemHead.cool_reHeIII_d, cool_reHeIII_rate_case_A, cooling_units);
       break;
     }
     case 1:
     case 2: {
-      Generate_Reaction_Rate_Table(&ChemHead.cool_reHII_d, cool_reHII_rate_case_B, units);
-      Generate_Reaction_Rate_Table(&ChemHead.cool_reHeII1_d, cool_reHeII1_rate_case_B, units);
-      Generate_Reaction_Rate_Table(&ChemHead.cool_reHeIII_d, cool_reHeIII_rate_case_B, units);
+      Generate_Reaction_Rate_Table(&ChemHead.cool_reHII_d, cool_reHII_rate_case_B, cooling_units);
+      Generate_Reaction_Rate_Table(&ChemHead.cool_reHeII1_d, cool_reHeII1_rate_case_B, cooling_units);
+      Generate_Reaction_Rate_Table(&ChemHead.cool_reHeIII_d, cool_reHeIII_rate_case_B, cooling_units);
       break;
     }
   }
-  Generate_Reaction_Rate_Table(&ChemHead.cool_reHeII2_d, cool_reHeII2_rate, units);
+  Generate_Reaction_Rate_Table(&ChemHead.cool_reHeII2_d, cool_reHeII2_rate, cooling_units);
 
   //create bremsstrahlung rates
-  Generate_Reaction_Rate_Table(&ChemHead.cool_brem_d, cool_brem_rate, units);
+  Generate_Reaction_Rate_Table(&ChemHead.cool_brem_d, cool_brem_rate, cooling_units);
 
   //set compton cooling rates
-  ChemHead.cool_compton = 5.65e-36 / units;
+  ChemHead.cool_compton = 5.65e-36 / cooling_units;
 }
 
   //creates the reaction rate tables
@@ -386,8 +386,8 @@ void Grid3D::SetUnitsChemistry(struct parameters *P)
   Chem.ChemHead.dens_number_conv = Chem.ChemHead.density_units / MH;
   
 
-  //set cosmology chemistry unit system if needed
-  #ifdef COSMOLOGY
+//set cosmology chemistry unit system if needed
+#ifdef COSMOLOGY
 
   //scale factor
   Chem.ChemHead.a_value          = Cosmo.current_a;
@@ -421,7 +421,7 @@ void Grid3D::SetUnitsChemistry(struct parameters *P)
   Chem.ChemHead.dens_number_conv *= Cosmo.rho_M_0*pow(Cosmo.cosmo_h,2);
 #endif //BRUNO_CHEM_UNITS
 
-  #endif  // COSMOLOGY
+#endif  // COSMOLOGY
 
   //set the chemistry velocity unit
   Chem.ChemHead.velocity_units = Chem.ChemHead.length_units / Chem.ChemHead.time_units;
@@ -435,91 +435,14 @@ void Grid3D::SetUnitsChemistry(struct parameters *P)
   //Converts code units to per cm^3 per s
   Chem.ChemHead.reaction_units   = 1 / (Chem.ChemHead.dens_number_conv * Chem.ChemHead.time_units);
 
-#ifdef COSMOLOGY
-#ifdef BRUNO_CHEM_UNITS
-  // divides out a factor of a^3
-  Chem.ChemHead.reaction_units /= pow(Chem.ChemHead.a_value,3); //comoving incl h?
-#endif //BRUNO_CHEM_UNITS
-#endif // COSMOLOGY
-
-  //set the chemistry cooling units, ergs per cm^3 per s^2
+  //set the chemistry cooling units, ergs per cm^3 per s
   Chem.ChemHead.cooling_units  = (KM_CGS*KM_CGS) * MH * Chem.ChemHead.reaction_units;
 
   //convert to cosmological cooling
 #ifdef COSMOLOGY
-#ifdef BRUNO_CHEM_UNITS
-  // divides out a factor of a^3
-  Chem.ChemHead.cooling_units /= pow(Chem.ChemHead.a_value,3); //comoving incl h?
-#endif // BRUNO_CHEM_UNITS
+  // rescales by a factor of 1/a^2 for cosmological units
+  Chem.ChemHead.cooling_units /= pow(Chem.ChemHead.a_value,2);
 #endif // COSMOLOGY
-//bruno has
-
-
-  //Real Msun, kpc_cgs, kpc_km, dens_to_CGS;
-  //Msun = MSUN_CGS;
-  //kpc_cgs = KPC_CGS;
-  //kpc_km  = KPC_KM;
-  //dens_to_CGS = Cosmo.rho_M_0 * Msun / kpc_cgs / kpc_cgs / kpc_cgs * Cosmo.cosmo_h * Cosmo.cosmo_h;
-
-  // These are conversions from code units to cgs. Following Grackle
-  //Chem.H.density_units  = dens_to_CGS / Chem.H.a_value / Chem.H.a_value / Chem.H.a_value ;
-  //Chem.H.length_units   = kpc_cgs / Cosmo.cosmo_h * Chem.H.a_value;
-  //Chem.H.time_units     = kpc_km / Cosmo.cosmo_h ;
-  //Chem.H.velocity_units = Chem.H.length_units /Chem.H.time_units;
-  //Chem.H.dens_number_conv = Chem.H.density_units * pow(Chem.H.a_value, 3) / MH;
-  //Real dens_base, length_base, time_base;
-  //dens_base   = Chem.H.density_units * Chem.H.a_value * Chem.H.a_value * Chem.H.a_value;
-  //length_base = Chem.H.length_units / Chem.H.a_value;
-  //time_base   = Chem.H.time_units;
-  //Chem.H.cooling_units   = ( pow(length_base, 2) * pow(MH, 2) ) / ( dens_base * pow(time_base, 3) );
-  //Chem.H.reaction_units = MH / (dens_base * time_base );
-  //#ifdef COSMOLOGY
-  //Real dens_base, length_base, time_base;
-  //dens_base   = Chem.ChemHead.density_units;
-  //length_base = Chem.ChemHead.length_units;
-  //dens_base   = dens_base * Chem.ChemHead.a_value * Chem.ChemHead.a_value * Chem.ChemHead.a_value;
-  //length_base = length_base / Chem.ChemHead.a_value;
-  //time_base = Chem.ChemHead.time_units;
-  //#endif  // COSMOLOGY
-
-
-  //BRANT
-  //Chem.ChemHead.dens_base   = dens_base;
-  //Chem.ChemHead.length_base = length_base;
-  //Chem.ChemHead.time_base   = time_base;
-
-  /// Chem.ChemHead.cooling_units   = ( pow(length_base, 2) * pow(MH, 2) ) / ( dens_base * pow(time_base, 3) ); NG 221127 -
-  /// this is incorrect
-  // includes velocity scale in cosmo
-  //Chem.ChemHead.cooling_units  = 1.0e10 * MH * MH / (dens_base * time_base);  // NG 221127 - fixed
-  //Chem.ChemHead.reaction_units = MH / (dens_base * time_base);
-  //Chem.ChemHead.reaction_units = MH / (Chem.ChemHead.density_units * Chem.ChemHead.time_units);
-  //Chem.ChemHead.cooling_units  = 1.0e10 * MH * Chem.ChemHead.reaction_units;
-  // printf(" cooling_units: %e\n", Chem.ChemHead.cooling_units );
-  // printf(" reaction_units: %e\n", Chem.ChemHead.reaction_units );
-  //
-//Bruno has
-//Chem.H.cooling_units   = ( pow(length_base, 2) * pow(MH, 2) ) / ( dens_base * pow(time_base, 3) );
-//Chem.H.reaction_units = MH / (dens_base * time_base );
-
-  //BRANT
-  Chem.ChemHead.heat_units = EV_CGS / Chem.ChemHead.cooling_units; //only used in converting tables?
-
-
-  //Chem.ChemHead.heat_units = Chem.ChemHead.eV_to_ergs * 1.0e-10 * Chem.ChemHead.time_units * Chem.ChemHead.density_units / MH / MH;
-  //    // heat_units_old = eV_to_ergs / ChemHead.cooling_units;  /// NG 221127: this is incorrect
-  //      heat_units = eV_to_ergs * 1e-10 * ChemHead.time_units * ChemHead.density_units / MH / MH;
-  //        //heat_units = EV_CGS * 1e-10 * ChemHead.time_units * ChemHead.density_units / MH / MH;
-  //
-
-// Bruno has
-/*
- *   heat_units = eV_to_ergs / H.cooling_units;
- *   in chemistry_io.cpp... 
- *       Ion_rates_HI_h[i]    = v[i][1] * ion_units;
- *           Heat_rates_HI_h[i]   = v[i][2] * heat_units;
- */
-
 
   //define the conversion between the conserved energy field units
   //and (cm/s)^2. In cosmology, the conserved energy field contains
@@ -532,13 +455,13 @@ void Grid3D::SetUnitsChemistry(struct parameters *P)
   Chem.ChemHead.energy_conversion  = ENERGY_UNIT / DENSITY_UNIT;  // NG: this is energy per unit mass
 #endif // COSMOLOGY
 
-  //define the conversion between photoheating and photoionization
-  //for the radiative transfer calculation
-#ifdef RT
-  Chem.ChemHead.unitPhotoHeating    = KB * Chem.ChemHead.time_units * Chem.ChemHead.density_units / MH / MH / (KM_CGS*KM_CGS);
-#endif //RT
+  //define the conversion between photoheating and photoionization rates
+  //and the internal code units
 
-  //Photo ionization units -- conver per second to per kyr in sec
+  //Photo heating units --    //cm^3 s / K
+  Chem.ChemHead.unitPhotoHeating = KB / Chem.ChemHead.cooling_units;
+
+  //Photo ionization units -- convert per second to per kyr in sec
   Chem.ChemHead.unitPhotoIonization = Chem.ChemHead.time_units;
 
 }
