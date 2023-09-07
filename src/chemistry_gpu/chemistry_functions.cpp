@@ -422,7 +422,11 @@ void Grid3D::SetUnitsChemistry(struct parameters *P)
   //reaction units are per number of hydrogen atoms in 1 msun per kpc^3
   //per 1 kyr expressed in cm^-3 s^-1
   //Converts code units to per cm^3 per s
-  Chem.ChemHead.reaction_units   = 1 / (Chem.ChemHead.dens_number_conv * pow(Chem.ChemHead.a_value,3) * Chem.ChemHead.time_units);
+  Chem.ChemHead.reaction_units   = 1 / (Chem.ChemHead.dens_number_conv * Chem.ChemHead.time_units);
+#ifdef COSMOLOGY
+  Chem.ChemHead.reaction_units   /= pow(Chem.ChemHead.a_value,3);
+#endif //COSMOLOGY
+
 
   //set the chemistry cooling units, ergs per cm^3 per s
   Chem.ChemHead.cooling_units  = (KM_CGS*KM_CGS) * MH * Chem.ChemHead.reaction_units;
