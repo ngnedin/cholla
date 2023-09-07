@@ -439,12 +439,6 @@ void Grid3D::SetUnitsChemistry(struct parameters *P)
   //set the chemistry cooling units, ergs per cm^3 per s
   Chem.ChemHead.cooling_units  = (KM_CGS*KM_CGS) * MH * Chem.ChemHead.reaction_units;
 
-  //convert to cosmological cooling
-#ifdef COSMOLOGY
-  // rescales by a factor of 1/a^2 for cosmological units
-  Chem.ChemHead.cooling_units /= pow(Chem.ChemHead.a_value,2);
-#endif // COSMOLOGY
-
   //define the conversion between the conserved energy field units
   //and (cm/s)^2. In cosmology, the conserved energy field contains
   //a factor of a^2 that is removed inside the chemistry routine
