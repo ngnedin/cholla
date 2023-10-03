@@ -104,6 +104,7 @@ int main(int argc, char *argv[])
   message = "Initializing Simulation";
   Write_Message_To_Log_File(message.c_str());
 
+
 #ifdef CHEMISTRY_GPU
   G.Initialize_Chemistry_Start(&P);
 #endif
@@ -121,6 +122,7 @@ int main(int argc, char *argv[])
     outtime += G.H.t;
     nfile = P.nfile;
   }
+
 
 #ifdef RT
   G.Rad.Initialize_Finish();
@@ -146,6 +148,9 @@ int main(int argc, char *argv[])
 
 #ifdef COSMOLOGY
   G.Initialize_Cosmology(&P);
+  if ( G.Cosmo.generate_initial_conditions ) {
+    G.Generate_Cosmological_Initial_Conditions( &P );
+  }
 #endif
 
 #ifdef COOLING_GRACKLE
@@ -179,6 +184,18 @@ int main(int argc, char *argv[])
 #ifdef GRAVITY_ANALYTIC_COMP
   G.Setup_Analytic_Potential(&P);
 #endif
+
+
+  MPI_Barrier(MPI_COMM_WORLD);
+  fflush(stdout);
+
+  //record what unit system was used
+  G.Show_Units(&P);
+
+  MPI_Barrier(MPI_COMM_WORLD);
+  fflush(stdout);
+  //chexit(0);
+
 
 #ifdef GRAVITY
   // Get the gravitational potential for the first timestep
@@ -249,6 +266,8 @@ int main(int argc, char *argv[])
   if (P.max_timestep != 0) {
     dt_max = P.max_timestep;
   }
+
+// main integration loop
 
   while (G.H.t < P.tout) {
 // get the start time

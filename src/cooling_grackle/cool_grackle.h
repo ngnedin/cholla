@@ -15,12 +15,11 @@ class Cool_GK
   code_units units;
   chemistry_data *data;
 
-  Real dens_conv;
-  Real energy_conv;
-
-  Real dens_to_CGS;
-  Real vel_to_CGS;
-  Real energy_to_CGS;
+  Real energy_conversion; //cosmology units to code units
+  Real density_to_CGS;    //code units to comoving CGS incl. h
+  Real energy_to_CGS;     //code units to comoving CGS incl. h
+  Real length_to_CGS;     //code units to comoving CGS incl. h
+  Real velocity_to_CGS;   //code units to comoving CGS incl. h
 
   Real gamma;
 
@@ -40,6 +39,10 @@ class Cool_GK
 
   Cool_GK(void);
 
+  //Create the unit system conversion for Grackle cooling
+  void SetUnitsCool(Cosmology &Cosmo);
+
+  //Initialize the Grackle cooling
   void Initialize(struct parameters *P, Cosmology &Cosmo);
 
   void Free_Memory();

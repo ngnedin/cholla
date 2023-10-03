@@ -15,9 +15,9 @@ void Grid3D::Generate_Cosmological_Initial_Conditions( struct parameters *P  ){
   
   int n_local = Cosmo.ICs.nx_local * Cosmo.ICs.ny_local * Cosmo.ICs.nz_local;
   
-  Cosmo.ICs.random_fluctiations = (Real *) malloc(n_local*sizeof(Real));
-  Cosmo.ICs.rescaled_random_fluctiations_dm  = (Real *) malloc(n_local*sizeof(Real));
-  Cosmo.ICs.rescaled_random_fluctiations_gas = (Real *) malloc(n_local*sizeof(Real));
+  Cosmo.ICs.random_fluctuations = (Real *) malloc(n_local*sizeof(Real));
+  Cosmo.ICs.rescaled_random_fluctuations_dm  = (Real *) malloc(n_local*sizeof(Real));
+  Cosmo.ICs.rescaled_random_fluctuations_gas = (Real *) malloc(n_local*sizeof(Real));
   
   long unsigned int random_seed;
   if ( P->cosmo_ics_random_seed == -1 ){
@@ -39,15 +39,15 @@ void Grid3D::Generate_Cosmological_Initial_Conditions( struct parameters *P  ){
   mean = 0;
   sigma = 0;
   for ( int i=0; i<n_local; i++ ){
-    Cosmo.ICs.random_fluctiations[i] = d(gen);
-    mean += Cosmo.ICs.random_fluctiations[i];
-    Cosmo.ICs.rescaled_random_fluctiations_dm[i]  = 0.0;
-    Cosmo.ICs.rescaled_random_fluctiations_gas[i] = 0.0; 
+    Cosmo.ICs.random_fluctuations[i] = d(gen);
+    mean += Cosmo.ICs.random_fluctuations[i];
+    Cosmo.ICs.rescaled_random_fluctuations_dm[i]  = 0.0;
+    Cosmo.ICs.rescaled_random_fluctuations_gas[i] = 0.0; 
   }
   mean /= n_local;
   mean = ReduceRealAvg( mean );
   for ( int i=0; i<n_local; i++ ){
-    sigma += ( Cosmo.ICs.random_fluctiations[i] - mean ) * ( Cosmo.ICs.random_fluctiations[i] - mean );
+    sigma += ( Cosmo.ICs.random_fluctuations[i] - mean ) * ( Cosmo.ICs.random_fluctuations[i] - mean );
   }
   sigma /= n_local;
   sigma = ReduceRealAvg( sigma );
@@ -68,7 +68,7 @@ void Grid3D::Generate_Cosmological_Initial_Conditions( struct parameters *P  ){
   chprintf( " Generating particles initial conditions... \n");
   // Call the FFT with filter to multuply by the sqrt of the DM Power Spectrum
   Real dx3 = H.dx * H.dy * H.dz;
-  Cosmo.ICs.FFT.Filter_rescale_by_power_spectrum( Cosmo.ICs.random_fluctiations, Cosmo.ICs.rescaled_random_fluctiations_dm, false,
+  Cosmo.ICs.FFT.Filter_rescale_by_power_spectrum( Cosmo.ICs.random_fluctuations, Cosmo.ICs.rescaled_random_fluctuations_dm, false,
                          Cosmo.ICs.Power_Spectrum.host_size, Cosmo.ICs.Power_Spectrum.dev_k, Cosmo.ICs.Power_Spectrum.dev_pk_dm, dx3 );
   
   
@@ -86,9 +86,9 @@ void Grid3D::Generate_Cosmological_Initial_Conditions( struct parameters *P  ){
   velocities_z = (Real *) malloc(n_local*sizeof(Real));
   
   // Call the FFT with filter to multiply the DM fluctuations by ik/k^2/D  
-  Cosmo.ICs.FFT.Filter_rescale_by_k_k2( Cosmo.ICs.rescaled_random_fluctiations_dm, displacements_z, false, 0, D );
-  Cosmo.ICs.FFT.Filter_rescale_by_k_k2( Cosmo.ICs.rescaled_random_fluctiations_dm, displacements_y, false, 1, D );
-  Cosmo.ICs.FFT.Filter_rescale_by_k_k2( Cosmo.ICs.rescaled_random_fluctiations_dm, displacements_x, false, 2, D );
+  Cosmo.ICs.FFT.Filter_rescale_by_k_k2( Cosmo.ICs.rescaled_random_fluctuations_dm, displacements_z, false, 0, D );
+  Cosmo.ICs.FFT.Filter_rescale_by_k_k2( Cosmo.ICs.rescaled_random_fluctuations_dm, displacements_y, false, 1, D );
+  Cosmo.ICs.FFT.Filter_rescale_by_k_k2( Cosmo.ICs.rescaled_random_fluctuations_dm, displacements_x, false, 2, D );
   
   //Initialize min and max values for position and velocity to print initial Statistics
   Real dx_min, dy_min, dz_min;
@@ -112,9 +112,9 @@ void Grid3D::Generate_Cosmological_Initial_Conditions( struct parameters *P  ){
         positions_y[indx] = H.yblocal + ( indx_j + 0.5 ) * H.dy + D * displacements_y[indx];
         positions_z[indx] = H.zblocal + ( indx_k + 0.5 ) * H.dz + D * displacements_z[indx];
   
-        velocities_x[indx] = Cosmo.current_a * D_dot * displacements_x[indx] * KPC / Cosmo.cosmo_h; // km /s
-        velocities_y[indx] = Cosmo.current_a * D_dot * displacements_y[indx] * KPC / Cosmo.cosmo_h; // km /s
-        velocities_z[indx] = Cosmo.current_a * D_dot * displacements_z[indx] * KPC / Cosmo.cosmo_h; // km /s
+        velocities_x[indx] = Cosmo.current_a * D_dot * displacements_x[indx] * KPC_KM / Cosmo.cosmo_h; // km /s  //BRANT: revisit
+        velocities_y[indx] = Cosmo.current_a * D_dot * displacements_y[indx] * KPC_KM  / Cosmo.cosmo_h; // km /s  //BRANT: revisit
+        velocities_z[indx] = Cosmo.current_a * D_dot * displacements_z[indx] * KPC_KM  / Cosmo.cosmo_h; // km /s  //BRANT: revisit
         
         dx_min = fmin( dx_min, D * displacements_x[indx] );
         dy_min = fmin( dy_min, D * displacements_y[indx] );
@@ -152,13 +152,13 @@ void Grid3D::Generate_Cosmological_Initial_Conditions( struct parameters *P  ){
   Particles.n_total_initial = ReducePartIntSum( n_local );
   chprintf( " N total particles: %ld \n", Particles.n_total_initial );
   
-  Real dens_dm_mean;   
-  #ifdef ONLY_PARTICLES
-  dens_dm_mean = 3*Cosmo.H0*Cosmo.H0 / ( 8*M_PI*Cosmo.cosmo_G ) * Cosmo.Omega_M /Cosmo.cosmo_h/Cosmo.cosmo_h;
-  #else
-  dens_dm_mean = 3*Cosmo.H0*Cosmo.H0 / ( 8*M_PI*Cosmo.cosmo_G ) * ( Cosmo.Omega_M - Cosmo.Omega_b ) /Cosmo.cosmo_h/Cosmo.cosmo_h;
+
+  //Set the particle mass
+  Real rho_dm_0 = Cosmo.rho_M_0; //total matter density (h^2 Msun/kpc^3)
+  #ifndef ONLY_PARTICLES
+  rho_dm_0 -= Cosmo.rho_b_0;     //dark matter density (h^2 Msun/kpc^3)
   #endif
-  Particles.particle_mass = dens_dm_mean * H.xdglobal * H.ydglobal * H.zdglobal / Particles.n_total_initial; 
+  Particles.particle_mass = rho_dm_0 * H.xdglobal * H.ydglobal * H.zdglobal / Particles.n_total_initial; 
   chprintf( " Particle mass: %e Msun/h \n", Particles.particle_mass );
   
   //Print initial Statistics
@@ -230,13 +230,13 @@ void Grid3D::Generate_Cosmological_Initial_Conditions( struct parameters *P  ){
   chprintf( "  Initial temperature: %f K\n", initial_temp );
   
   // Call the FFT with filter to multuply by the sqrt of the Gas Power Spectrum
-  Cosmo.ICs.FFT.Filter_rescale_by_power_spectrum( Cosmo.ICs.random_fluctiations, Cosmo.ICs.rescaled_random_fluctiations_gas, false,
+  Cosmo.ICs.FFT.Filter_rescale_by_power_spectrum( Cosmo.ICs.random_fluctuations, Cosmo.ICs.rescaled_random_fluctuations_gas, false,
                          Cosmo.ICs.Power_Spectrum.host_size, Cosmo.ICs.Power_Spectrum.dev_k, Cosmo.ICs.Power_Spectrum.dev_pk_gas, dx3 );
   
   // Call the FFT with filter to multiply the GAS fluctuations by ik/k^2/D  
-  Cosmo.ICs.FFT.Filter_rescale_by_k_k2( Cosmo.ICs.rescaled_random_fluctiations_gas, displacements_z, false, 0, D );
-  Cosmo.ICs.FFT.Filter_rescale_by_k_k2( Cosmo.ICs.rescaled_random_fluctiations_gas, displacements_y, false, 1, D );
-  Cosmo.ICs.FFT.Filter_rescale_by_k_k2( Cosmo.ICs.rescaled_random_fluctiations_gas, displacements_x, false, 2, D );
+  Cosmo.ICs.FFT.Filter_rescale_by_k_k2( Cosmo.ICs.rescaled_random_fluctuations_gas, displacements_z, false, 0, D );
+  Cosmo.ICs.FFT.Filter_rescale_by_k_k2( Cosmo.ICs.rescaled_random_fluctuations_gas, displacements_y, false, 1, D );
+  Cosmo.ICs.FFT.Filter_rescale_by_k_k2( Cosmo.ICs.rescaled_random_fluctuations_gas, displacements_x, false, 2, D );
   
   
   Real dens_max, dens_min, dens_mean;
@@ -268,10 +268,10 @@ void Grid3D::Generate_Cosmological_Initial_Conditions( struct parameters *P  ){
       for ( indx_i=0; indx_i<Cosmo.ICs.nx_local; indx_i++ ){
         indx = indx_i + indx_j*Cosmo.ICs.nx_local + indx_k*Cosmo.ICs.nx_local*Cosmo.ICs.ny_local;
   
-        density[indx] = Cosmo.rho_mean_baryon * ( 1 + Cosmo.ICs.rescaled_random_fluctiations_gas[indx] );
-        momentum_x[indx] = density[indx] * Cosmo.current_a * D_dot * displacements_x[indx] * KPC / Cosmo.cosmo_h;
-        momentum_y[indx] = density[indx] * Cosmo.current_a * D_dot * displacements_y[indx] * KPC / Cosmo.cosmo_h;
-        momentum_z[indx] = density[indx] * Cosmo.current_a * D_dot * displacements_z[indx] * KPC / Cosmo.cosmo_h;
+        density[indx] = Cosmo.rho_b_0 * ( 1 + Cosmo.ICs.rescaled_random_fluctuations_gas[indx] );
+        momentum_x[indx] = density[indx] * Cosmo.current_a * D_dot * displacements_x[indx] * KPC_KM / Cosmo.cosmo_h; //BRANT: revisit
+        momentum_y[indx] = density[indx] * Cosmo.current_a * D_dot * displacements_y[indx] * KPC_KM / Cosmo.cosmo_h; //BRANT: revisit
+        momentum_z[indx] = density[indx] * Cosmo.current_a * D_dot * displacements_z[indx] * KPC_KM / Cosmo.cosmo_h; //BRANT: revisit
         GasEnergy[indx] = density[indx] * initial_temp / ( gama - 1 ) / MP * KB / 1e10 / mmw;
         Energy[indx] = GasEnergy[indx] + 0.5 * ( momentum_x[indx]*momentum_x[indx] + momentum_y[indx]*momentum_y[indx] + momentum_z[indx]*momentum_z[indx]  ) / density[indx];
   
@@ -387,7 +387,7 @@ void Grid3D::Generate_Cosmological_Initial_Conditions( struct parameters *P  ){
   #endif// NOT ONLY_PARTICLES
   
   // Change to comoving Cosmological System
-  Change_Cosmological_Frame_Sytem( true );
+  Change_Cosmological_Frame_System( true );
   
   // Reset everything
   free( displacements_x );

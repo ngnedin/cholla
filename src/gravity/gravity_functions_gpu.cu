@@ -66,7 +66,7 @@ void Grav3D::FreeMemory_GPU(void)
 }
 
 void __global__ Copy_Hydro_Density_to_Gravity_Kernel(Real *src_density_d, Real *dst_density_d, int nx_local,
-                                                     int ny_local, int nz_local, int n_ghost, Real cosmo_rho_0_gas)
+                                                     int ny_local, int nz_local, int n_ghost, Real cosmo_rho_M_0)
 {
   int tid_x, tid_y, tid_z, tid_grid, tid_dens;
   tid_x = blockIdx.x * blockDim.x + threadIdx.x;
@@ -92,7 +92,7 @@ void __global__ Copy_Hydro_Density_to_Gravity_Kernel(Real *src_density_d, Real *
   dens = src_density_d[tid_grid];
 
   #ifdef COSMOLOGY
-  dens *= cosmo_rho_0_gas;
+  dens *= cosmo_rho_M_0;
   #endif
 
   #ifdef PARTICLES
@@ -122,17 +122,17 @@ void Grid3D::Copy_Hydro_Density_to_Gravity_GPU()
   //  number of threads per 1D block
   dim3 dim3dBlock(tpb_x, tpb_y, tpb_z);
 
-  Real cosmo_rho_0_gas;
+  Real cosmo_rho_M_0;
 
   #ifdef COSMOLOGY
-  cosmo_rho_0_gas = Cosmo.rho_0_gas;
+  cosmo_rho_M_0 = Cosmo.rho_M_0;
   #else
-  cosmo_rho_0_gas         = 1.0;
+  cosmo_rho_M_0         = 1.0;
   #endif
 
   // Copy the density from the device array to the Poisson input density array
   hipLaunchKernelGGL(Copy_Hydro_Density_to_Gravity_Kernel, dim3dGrid, dim3dBlock, 0, 0, C.d_density, Grav.F.density_d,
-                     nx_local, ny_local, nz_local, n_ghost, cosmo_rho_0_gas);
+                     nx_local, ny_local, nz_local, n_ghost, cosmo_rho_M_0);
 }
 
   #if defined(GRAVITY_ANALYTIC_COMP)
@@ -259,7 +259,7 @@ void Grid3D::Extrapolate_Grav_Potential_GPU()
   dt_prev = Grav.dt_prev;
 
   #ifdef COSMOLOGY
-  cosmo_factor = Cosmo.current_a * Cosmo.current_a / Cosmo.phi_0_gas;
+  cosmo_factor = Cosmo.current_a * Cosmo.current_a / Cosmo.phi_0_cosmo;
   #else
   cosmo_factor            = 1.0;
   #endif

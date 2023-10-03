@@ -50,6 +50,7 @@ disk.*
 *.log
 *.sql
 *.sqlite
+*.swp
 
 # Packages #
 ############

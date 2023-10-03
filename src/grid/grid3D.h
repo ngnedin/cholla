@@ -841,7 +841,7 @@ class Grid3D
   void Change_DM_Frame_System(bool forward);
   void Change_GAS_Frame_System(bool forward);
   void Change_GAS_Frame_System_GPU(bool forward);
-  void Change_Cosmological_Frame_Sytem(bool forward);
+  void Change_Cosmological_Frame_System(bool forward);
   void Advance_Particles_KDK_Cosmo_Step1_function(part_int_t p_start, part_int_t p_end);
   void Advance_Particles_KDK_Cosmo_Step2_function(part_int_t p_start, part_int_t p_end);
   Real Calc_Particles_dt_Cosmo_function(part_int_t p_start, part_int_t p_end);
@@ -850,6 +850,7 @@ class Grid3D
   void Advance_Particles_KDK_Cosmo_Step1_GPU();
   void Advance_Particles_KDK_Cosmo_Step2_GPU();
   #endif  // PARTICLES_GPU
+  void Generate_Cosmological_Initial_Conditions( struct parameters *P );
 #endif    // COSMOLOGY
 
 #ifdef COOLING_GRACKLE
@@ -866,6 +867,7 @@ class Grid3D
 #ifdef CHEMISTRY_GPU
   void Initialize_Chemistry_Start(struct parameters *P);
   void Initialize_Chemistry_Finish(struct parameters *P);
+  void SetUnitsChemistry(struct parameters *P);
   void Compute_Gas_Temperature(Real *temperature, bool convert_cosmo_units);
   void Update_Chemistry();
 #endif
@@ -900,6 +902,12 @@ class Grid3D
     #endif
   #endif  // LYA_STATISTICS
 #endif    // ANALYSIS
+
+
+  /*! \fn int Show_Units(struct parameters *P)
+   *  \brief Show the unit system used in this simulation. */
+  int Show_Units(struct parameters *P);
+
 };
 
 // typedef for Grid3D_PointerMemberFunction

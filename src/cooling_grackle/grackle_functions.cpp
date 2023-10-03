@@ -34,7 +34,7 @@ void Grid3D::Initialize_Fields_Grackle()
         // Cool.fields.z_velocity[id] = 0.0;
 
         Cool.fields.internal_energy[id] =
-            C.GasEnergy[id] / C.density[id] * Cool.energy_conv / Cosmo.current_a / Cosmo.current_a;
+            C.GasEnergy[id] / C.density[id] * Cool.energy_conversion / Cosmo.current_a / Cosmo.current_a;
       }
     }
   }
@@ -130,7 +130,7 @@ void Grid3D::Copy_Fields_To_Grackle_function(int g_start, int g_end)
         // if ( flag_DE ) U = GE;
         // else U = E - Ekin;
         U                               = GE;
-        Cool.fields.internal_energy[id] = U / d * Cool.energy_conv / Cosmo.current_a / Cosmo.current_a;
+        Cool.fields.internal_energy[id] = U / d * Cool.energy_conversion / Cosmo.current_a / Cosmo.current_a;
       }
     }
   }
@@ -170,7 +170,7 @@ void Grid3D::Update_Internal_Energy_function(int g_start, int g_end)
         // else std::cout << " ### Frag_DE ERROR: Flag_DE: " << flag_DE <<
         // std::endl;
         U_0     = GE;
-        U_1     = Cool.fields.internal_energy[id] * dens / Cool.energy_conv * Cosmo.current_a * Cosmo.current_a;
+        U_1     = Cool.fields.internal_energy[id] * dens / Cool.energy_conversion * Cosmo.current_a * Cosmo.current_a;
         delta_U = U_1 - U_0;
         C.GasEnergy[id] += delta_U;
         C.Energy[id] += delta_U;
@@ -184,7 +184,7 @@ void Grid3D::Do_Cooling_Step_Grackle()
   Real kpc_cgs = KPC_CGS;
   // Update the units conversion
   Cool.units.a_value       = Cosmo.current_a / Cool.units.a_units;
-  Cool.units.density_units = Cool.dens_to_CGS / Cosmo.current_a / Cosmo.current_a / Cosmo.current_a;
+  Cool.units.density_units = Cool.density_to_CGS / Cosmo.current_a / Cosmo.current_a / Cosmo.current_a;
   Cool.units.length_units  = kpc_cgs / Cosmo.cosmo_h * Cosmo.current_a;
 
   Copy_Fields_To_Grackle();

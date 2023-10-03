@@ -428,7 +428,7 @@ Real Grid3D::Update_Grid(void)
   U_floor = H.temperature_floor * KB / (gama - 1) / MP / SP_ENERGY_UNIT;
 #ifdef COSMOLOGY
   U_floor = H.temperature_floor / (gama - 1) / MP * KB * 1e-10;  // ( km/s )^2
-  U_floor /= Cosmo.v_0_gas * Cosmo.v_0_gas / Cosmo.current_a / Cosmo.current_a;
+  U_floor /= Cosmo.v_0_cosmo * Cosmo.v_0_cosmo / Cosmo.current_a / Cosmo.current_a;
 #endif
 
   // Run the hydro integrator on the grid
@@ -489,7 +489,7 @@ Real Grid3D::Update_Grid(void)
   #ifdef CHEMISTRY_GPU
   Update_Chemistry();
     #ifdef CPU_TIME
-  Timer.Chemistry.RecordTime(Chem.H.runtime_chemistry_step);
+  Timer.Chemistry.RecordTime(Chem.ChemHead.runtime_chemistry_step);
     #endif
   #endif
 
@@ -555,7 +555,7 @@ Real Grid3D::Update_Hydro_Grid()
 
 #ifdef CPU_TIME
   #ifdef CHEMISTRY_GPU
-  Timer.Hydro.Subtract(Chem.H.runtime_chemistry_step);
+  Timer.Hydro.Subtract(Chem.ChemHead.runtime_chemistry_step);
   // Subtract the time spent on the Chemical Update
   #endif  // CHEMISTRY_GPU
   Timer.Hydro.End();
@@ -594,6 +594,54 @@ void Grid3D::Update_Time()
 #if defined(ANALYSIS) && defined(COSMOLOGY)
   Analysis.current_z = Cosmo.current_z;
 #endif
+}
+
+/*! \fn int Show_Units(struct parameters *P)
+*  \brief Show the unit system used in this simulation. */
+int Grid3D::Show_Units(struct parameters *P)
+{
+  int code = 0;
+
+  chprintf("*********\n");
+  chprintf("Complete unit system used by this simulation:\n");
+  chprintf("*********\n\n");
+
+
+  chprintf("*** global.h ***\n");
+  code = chprintf("PI                                   %10.9e.\n",PI);
+  code = chprintf("MP                                   %10.9e. [g]\n",MP);
+  code = chprintf("KB                                   %10.9e. [cgs]\n",KB);
+  code = chprintf("GN                                   %10.9e. [kpc^3 / M_sun / kyr^2]\n",GN);
+  code = chprintf("C_L                                  %10.9e. [kpc / kyr]\n",C_L);
+  code = chprintf("MYR                                  %10.9e. [s]\n",MYR);
+  code = chprintf("KPC_KM                               %10.9e. [km]\n",KPC_KM);
+  code = chprintf("G_COSMO                              %10.9e. [kpc km^2 s^-2 Msun^-1]\n",G_COSMO);
+  code = chprintf("MSUN_CGS                             %10.9e. [g]\n",MSUN_CGS);
+  code = chprintf("KPC_CGS                              %10.9e. [cm]\n",KPC_CGS);
+  code = chprintf("KM_CGS                               %10.9e. [cm]\n",KM_CGS);
+  code = chprintf("MH                                   %10.9e. [g]\n",MH);
+  code = chprintf("EV_CGS                               %10.9e. [ergs]\n",EV_CGS);
+  code = chprintf("TIME_UNIT                            %10.9e. [kyr in s]\n",TIME_UNIT);
+  code = chprintf("LENGTH_UNIT                          %10.9e. [kpc in cm]\n",LENGTH_UNIT);
+  code = chprintf("MASS_UNIT                            %10.9e. [msun in g]\n",MASS_UNIT);
+  code = chprintf("DENSITY_UNIT                         %10.9e. [msun/kpc^3 in g/cm^3]\n",DENSITY_UNIT);
+  code = chprintf("VELOCITY_UNIT                        %10.9e. [kpc/kyr in cm/s]\n",VELOCITY_UNIT);
+  code = chprintf("ENERGY_UNIT                          %10.9e. [msun/kpc^3 * (kpc/kyr)^2 in g/cm/s^2]\n",ENERGY_UNIT);
+  code = chprintf("PRESSURE_UNIT                        %10.9e. [msun/kpc^3 * (kpc/kyr)^2 in g/cm/s^2]\n",PRESSURE_UNIT);
+  code = chprintf("SP_ENERGY_UNIT                       %10.9e. [msun/kpc^3 * (kpc/kyr)^2 in g/cm/s^2]\n",PRESSURE_UNIT);
+  code = chprintf("M_PI                                 %10.9e.\n",M_PI);
+
+#ifdef COSMOLOGY
+  Cosmo.chprintf_cosmology_units();
+#endif //COSMOLOGY
+
+#ifdef CHEMISTRY_GPU
+  Chem.chprintf_chemistry_units();
+#endif //CHEMISTRY_GPU
+
+  fflush(stdout);
+
+  return code;
 }
 
 /*! \fn void Reset(void)

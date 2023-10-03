@@ -28,6 +28,7 @@ void OutputSlices(Grid3D& G, struct parameters P, int nfile);
 /* MPI-safe printf routine */
 int chprintf(const char* __restrict sdata, ...);
 
+
 /*!
  * \brief Convert a floating point number to a string such that it can be
  * exactly deserialized back from a string to the same floating point number.

@@ -17,7 +17,7 @@ Real Cosmology::Get_Linear_Growth_Factor_Deriv( Real a ){
 
 Real Cosmology::Time_Integrand( Real a ){
   Real H = Get_Hubble_Parameter_Full( a );
-  return 1 / ( H * a ) ;
+  return 1 / ( H * a ) ; // kpc/(km/s)
 }
 
 Real Cosmology::Get_Current_Time( Real a_end ){
@@ -33,14 +33,14 @@ Real Cosmology::Get_Current_Time( Real a_end ){
     if ( i%2 == 0 ) integral += 2 * Time_Integrand(a);
     else integral += 4 * Time_Integrand(a);
   }
-  integral *= delta_a / 3;
-  return integral * KPC;
+  integral *= delta_a / 3;  // kpc/(km/s)
+  return integral * time_conversion; //s
 }
 
 
 Real Cosmology::Growth_Factor_Integrand( Real a ){
   Real H = Get_Hubble_Parameter_Full( a );
-  return 1 / pow( H * a, 3);
+  return 1 / pow( H * a, 3);  // (kpc/(km/s)^3
 }
 
 Real Cosmology::Get_Linear_Growth_Factor( Real a_end ){
@@ -58,7 +58,7 @@ Real Cosmology::Get_Linear_Growth_Factor( Real a_end ){
   }
   integral *= delta_a / 3;
   H = Get_Hubble_Parameter_Full( a );
-  return double(5.0)/2 * H0 * H0 * Omega_M * H * integral;
+  return double(5.0)/2 * H0 * H0 * Omega_M * H * integral; //unit free
 }
 
 void Grid3D::Initialize_Cosmology(struct parameters *P)
@@ -95,7 +95,16 @@ Real Cosmology::Get_Hubble_Parameter(Real a)
   Real a2     = a * a;
   Real a3     = a2 * a;
   Real factor = (Omega_M / a3 + Omega_K / a2 + Omega_L);
-  return H0 * sqrt(factor);
+  return H0 * sqrt(factor); // (km/s)/kpc
+}
+
+Real Cosmology::Get_Hubble_Parameter_Full( Real a )
+{
+  Real a2 = a * a;
+  Real a3 = a2 * a;
+  Real a4 = a3 * a;
+  Real factor = ( Omega_R/a4 + Omega_M/a3 + Omega_K/a2 + Omega_L );
+  return H0 * sqrt(factor); // (km/s)/kpc
 }
 
 void Grid3D::Change_Cosmological_Frame_System(bool forward)
@@ -138,13 +147,13 @@ void Grid3D::Change_GAS_Frame_System(bool forward)
 {
   Real dens_factor, momentum_factor, energy_factor;
   if (forward) {
-    dens_factor     = 1 / Cosmo.rho_0_gas;
-    momentum_factor = 1 / Cosmo.rho_0_gas / Cosmo.v_0_gas * Cosmo.current_a;
-    energy_factor   = 1 / Cosmo.rho_0_gas / Cosmo.v_0_gas / Cosmo.v_0_gas * Cosmo.current_a * Cosmo.current_a;
+    dens_factor     = 1 / Cosmo.rho_M_0;
+    momentum_factor = 1 / Cosmo.rho_M_0 / Cosmo.v_0_cosmo * Cosmo.current_a;
+    energy_factor   = 1 / Cosmo.rho_M_0 / Cosmo.v_0_cosmo / Cosmo.v_0_cosmo * Cosmo.current_a * Cosmo.current_a;
   } else {
-    dens_factor     = Cosmo.rho_0_gas;
-    momentum_factor = Cosmo.rho_0_gas * Cosmo.v_0_gas / Cosmo.current_a;
-    energy_factor   = Cosmo.rho_0_gas * Cosmo.v_0_gas * Cosmo.v_0_gas / Cosmo.current_a / Cosmo.current_a;
+    dens_factor     = Cosmo.rho_M_0;
+    momentum_factor = Cosmo.rho_M_0 * Cosmo.v_0_cosmo / Cosmo.current_a;
+    energy_factor   = Cosmo.rho_M_0 * Cosmo.v_0_cosmo * Cosmo.v_0_cosmo / Cosmo.current_a / Cosmo.current_a;
   }
   int k, j, i, id;
   for (k = 0; k < H.nz; k++) {

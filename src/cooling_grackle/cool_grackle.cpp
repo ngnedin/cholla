@@ -11,6 +11,8 @@
 
 Cool_GK::Cool_GK(void) {}
 
+
+//Initialize grackle cooling
 void Grid3D::Initialize_Grackle(struct parameters *P)
 {
   chprintf("Initializing Grackle... \n");
@@ -22,6 +24,34 @@ void Grid3D::Initialize_Grackle(struct parameters *P)
   Initialize_Fields_Grackle();
 
   chprintf("Grackle Initialized Successfully. \n\n");
+}
+
+
+//Create the unit system conversion for Grackle cooling
+void Cool_GK::SetUnitsCool(Cosmology &Cosmo)
+{
+  energy_conversion    = Cosmo.v_0_cosmo * Cosmo.v_0_cosmo; //cosmo units to km/s
+  Real mass_to_CGS     = MSUN_CGS; //solar mass in cgs
+  Real length_to_CGS   = KPC_CGS;  //kpc in cgs
+  Real km_to_CGS       = KM_CGS;   //km in cgs
+
+  //convert from cosmological density unit to comoving cgs incl h.
+  density_to_CGS  = Cosmo.rho_M_0 * pow(Cosmo.cosmo_h,2) * mass_to_CGS / pow(length_to_CGS,3); //density unit in cgs
+
+  //velocity units in cgs
+  velocity_to_CGS      = km_to_CGS; //convert km/s to cm/s
+
+  //energy per unit mass in cgs
+  energy_to_CGS        = pow(velocity_to_CGS,2); //convert (km/s)^2 to (cm/s)^2
+
+  // These are conversions from code units to cgs.
+  units.comoving_coordinates = 1;    // 1 if cosmological sim, 0 if not
+  units.a_units              = 1.0;  // units for the expansion factor
+  units.a_value              = Cosmo.current_a / units.a_units; //propagate current scale factor
+  units.density_units        = density_to_CGS / Cosmo.current_a / Cosmo.current_a / Cosmo.current_a; //physical density in cgs
+  units.length_units         = length_to_CGS / Cosmo.cosmo_h * Cosmo.current_a; //physical length in cgs
+  units.time_units           = Cosmo.time_conversion / Cosmo.cosmo_h; //converts (kpc/h)/(km/s) to s
+  units.velocity_units       = units.length_units / Cosmo.current_a / units.time_units;  // since u = a * dx/dt 
 }
 
 void Cool_GK::Initialize(struct parameters *P, Cosmology &Cosmo)
@@ -38,26 +68,8 @@ void Cool_GK::Initialize(struct parameters *P, Cosmology &Cosmo)
   tiny_number = 1.e-20;
   gamma       = P->gamma;
 
-  dens_conv   = Cosmo.rho_0_gas;
-  energy_conv = Cosmo.v_0_gas * Cosmo.v_0_gas;
-
-  Real Msun = MSUN_CGS;
-  Real kpc  = KPC_CGS;
-  Real km   = KM_CGS
-
-      dens_to_CGS = dens_conv * Msun / kpc / kpc / kpc * Cosmo.cosmo_h * Cosmo.cosmo_h;
-  vel_to_CGS      = km;
-  energy_to_CGS   = km * km;
-
-  // First, set up the units system.
-  // These are conversions from code units to cgs.
-  units.comoving_coordinates = 1;    // 1 if cosmological sim, 0 if not
-  units.a_units              = 1.0;  // units for the expansion factor
-  units.a_value              = Cosmo.current_a / units.a_units;
-  units.density_units        = dens_to_CGS / Cosmo.current_a / Cosmo.current_a / Cosmo.current_a;
-  units.length_units         = kpc / Cosmo.cosmo_h * Cosmo.current_a;
-  units.time_units           = KPC / Cosmo.cosmo_h;
-  units.velocity_units       = units.length_units / Cosmo.current_a / units.time_units;  // since u = a * dx/dt
+  // First, set up the unit system.
+  SetUnitsCool(Cosmo);
 
   // Second, create a chemistry object for parameters.  This needs to be a
   // pointer.
@@ -73,14 +85,7 @@ void Cool_GK::Initialize(struct parameters *P, Cosmology &Cosmo)
   data->with_radiative_cooling = 1;  // Cooling on
   data->primordial_chemistry   = 1;  // molecular network with H, He
   data->UVbackground           = 1;  // UV background on
-  // data->grackle_data_file = "src/cooling/CloudyData_UVB=HM2012.h5"; // data
-  // file data->grackle_data_file =
-  // "src/cooling/CloudyData_UVB=HM2012_cloudy.h5"; // data file
-  // data->grackle_data_file =
-  // "src/cooling_grackle/CloudyData_UVB=Puchwein2018_cloudy.h5"; // data file
   data->grackle_data_file = P->UVB_rates_file;  // data file
-  // data->grackle_data_file = "src/cooling/CloudyData_UVB=FG2011.h5"; // data
-  // file
   data->use_specific_heating_rate   = 0;
   data->use_volumetric_heating_rate = 0;
   data->cmb_temperature_floor       = 1;

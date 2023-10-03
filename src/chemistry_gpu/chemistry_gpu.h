@@ -18,27 +18,33 @@ class Grid3D;
 // #define TEXTURES_UVB_INTERPOLATION
 
 struct Chemistry_Header {
+
   Real gamma;
-  Real density_conversion;
-  Real energy_conversion;
-  Real current_z;
   Real runtime_chemistry_step;
   Real H_fraction;
 
   // Units system
-  Real a_value;
-  Real density_units;
-  Real length_units;
-  Real time_units;
+  Real a_value;             //current scale factor
+  Real density_units;       //density units to physical cgs
+  Real energy_units;        //
+  Real length_units;        //length scale to physical cm
+  Real time_units;          //time scale in s
+  Real energy_conversion;   //converts between conserved energy field and (cm/s)^2 a^2
+  Real current_z;           //current redshift
+
+  //Real dens_base;
+  //Real length_base;
+  //Real time_base;
   Real velocity_units;
   Real cooling_units;
   Real reaction_units;
   Real dens_number_conv;
+  Real heat_units;
+  // heat_units_old = eV_to_ergs / ChemHead.cooling_units;  /// NG 221127: this is incorrect
+  //   heat_units = eV_to_ergs * 1e-10 * ChemHead.time_units * ChemHead.density_units / MH / MH;
 
-  // Cosmological parameters
+  // Hubble parameter
   Real H0;
-  Real Omega_M;
-  Real Omega_L;
 
   // Interpolation tables for the rates
   int N_Temp_bins;
@@ -84,11 +90,12 @@ struct Chemistry_Header {
   float *photo_heat_HeI_rate_d;
   float *photo_heat_HeII_rate_d;
 
+
+  Real unitPhotoIonization; //converts per sec to code units
+  Real unitPhotoHeating;    //converts s per cm^3 per erg to code units
 #ifdef RT
   const StaticTableGPU<float, 3, 'x'> *dTables[2];
   const PhotoRateTableStretchCSI *dStretch;
-  Real unitPhotoHeating;
-  Real unitPhotoIonization;
 #endif
 };
 
@@ -130,7 +137,7 @@ class Chem_GPU
   float *Ion_rates_HeI_d;
   float *Ion_rates_HeII_d;
 
-  struct Chemistry_Header H;
+  struct Chemistry_Header ChemHead;
 
   struct Fields {
     Real *temperature_h;
@@ -147,17 +154,32 @@ class Chem_GPU
 
   void Generate_Reaction_Rate_Table(Real **rate_table_array_d, Rate_Function_T rate_function, Real units);
 
+  //creates the cooling rate tables
+  //for collisional ionization,
+  //collisional excitation, 
+  //recombination, compton, and
+  //bremsstrahlung
   void Initialize_Cooling_Rates();
 
+  //creates the reaction rate tables
+  //for collisions and recombinations
   void Initialize_Reaction_Rates();
 
+  //loads the uvb rates from file and
+  //copies them to the gpu
   void Initialize_UVB_Ionization_and_Heating_Rates(struct parameters *P);
 
+  //loads the uvb rates from a file
   void Load_UVB_Ionization_and_Heating_Rates(struct parameters *P);
 
+  //Copies chemistry uvb rate arrays to GPU
   void Copy_UVB_Rates_to_GPU();
 
+  //Free chemistry rate arrays
   void Reset();
+
+  //print the chemistry units to stdout
+  int chprintf_chemistry_units();
 
   #ifdef TEXTURES_UVB_INTERPOLATION
   void Bind_GPU_Textures(int size, float *H_HI_h, float *H_HeI_h, float *H_HeII_h, float *I_HI_h, float *I_HeI_h,

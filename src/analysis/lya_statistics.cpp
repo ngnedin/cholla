@@ -1305,15 +1305,15 @@ void Grid3D::Populate_Lya_Skewers_Local(int axis)
         if (axis == 0) id_grid = (id_los + n_ghost) + (id_i + n_ghost) * nx_grid + (id_j + n_ghost) * nx_grid * nz_grid;
         if (axis == 1) id_grid = (id_i + n_ghost) + (id_los + n_ghost) * nx_grid + (id_j + n_ghost) * nx_grid * nz_grid;
         if (axis == 2) id_grid = (id_i + n_ghost) + (id_j + n_ghost) * nx_grid + (id_los + n_ghost) * nx_grid * nz_grid;
-        density  = C.density[id_grid] * Cosmo.rho_0_gas;
-        velocity = momentum_los[id_grid] * Cosmo.rho_0_gas * Cosmo.v_0_gas / Cosmo.current_a / density;
+        density  = C.density[id_grid] * Cosmo.rho_M_0;
+        velocity = momentum_los[id_grid] * Cosmo.rho_M_0 * Cosmo.v_0_cosmo / Cosmo.current_a / density;
     #ifdef COOLING_GRACKLE
-        HI_density   = Cool.fields.HI_density[id_grid] * Cosmo.rho_0_gas;
-        HeII_density = Cool.fields.HeII_density[id_grid] * Cosmo.rho_0_gas;
+        HI_density   = Cool.fields.HI_density[id_grid] * Cosmo.rho_M_0;
+        HeII_density = Cool.fields.HeII_density[id_grid] * Cosmo.rho_M_0;
         temperature  = Cool.temperature[id_grid];
     #elif defined CHEMISTRY_GPU
-        HI_density   = C.HI_density[id_grid] * Cosmo.rho_0_gas;
-        HeII_density = C.HeII_density[id_grid] * Cosmo.rho_0_gas;
+        HI_density   = C.HI_density[id_grid] * Cosmo.rho_M_0;
+        HeII_density = C.HeII_density[id_grid] * Cosmo.rho_M_0;
         temperature  = Chem.Fields.temperature_h[id_grid];
     #else
         chprintf(

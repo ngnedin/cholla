@@ -23,23 +23,18 @@ typedef double Real;
 
 #define MAXLEN      2048
 #define TINY_NUMBER 1.0e-20
+#define HUGE_NUMBER 1.0e30
 #define PI          3.141592653589793
-#define MP          1.672622e-24  // mass of proton, grams
-#define KB          1.380658e-16  // boltzmann constant, cgs
-// #define GN 6.67259e-8 // gravitational constant, cgs
-#define GN  4.49451e-18  // gravitational constant, kpc^3 / M_sun / kyr^2
+#define MP          1.67262192369e-24  // mass of proton, grams, from NIST
+#define KB          1.380649e-16  // boltzmann constant, erg K^-1 in cgs, from NIST
+//#define GN 6.67259e-8 // gravitational constant, cgs
+//#define GN  4.49451e-18  // gravitational constant, kpc^3 / M_sun / kyr^2
+#define GN_CGS 6.67430e-8 //cm^3 /g /s^2 from NIST
 #define C_L 0.306594593  // speed of light in kpc/kyr
-
-#define MYR      31.536e12         // Myears in secs
-#define KPC      3.086e16          // kpc in km
-#define G_COSMO  4.300927161e-06;  // gravitational constant, kpc km^2 s^-2 Msun^-1
-#define MSUN_CGS 1.98847e33;       // Msun in gr
-#define KPC_CGS  3.086e21;         // kpc in cm
-#define KM_CGS   1e5;              // km in cm
-#define MH       1.67262171e-24    // Mass of hydrogen [g]
 
 #define TIME_UNIT   3.15569e10     // 1 kyr in s
 #define LENGTH_UNIT 3.08567758e21  // 1 kpc in cm
+//#define LENGTH_UNIT 3.086e16             // kpc in km
 #define MASS_UNIT   1.98847e33     // 1 solar mass in grams
 /// #define TIME_UNIT (1e3*3.15569e10) // 1 kyr in s
 /// #define LENGTH_UNIT (13.2*3.08567758e21) // 1 kpc in cm
@@ -54,6 +49,26 @@ typedef double Real;
 #ifndef M_PI
   #define M_PI 3.141592653589793238462643383279
 #endif
+
+
+#define GN  (GN_CGS * (MASS_UNIT*TIME_UNIT*TIME_UNIT)/(LENGTH_UNIT*LENGTH_UNIT*LENGTH_UNIT))  // gravitational constant, kpc^3 / M_sun / kyr^2
+
+//COSMOLOGY
+//#define MYR      31.536e12            // Myears in secs
+#define KM_CGS   1e5                    // km in cm
+#define MYR      (TIME_UNIT * 1.e3)     //Myears in secs
+//#define KPC      3.086e16             // kpc in km
+#define KPC_KM   (LENGTH_UNIT / KM_CGS) //kpc in km
+//#define G_COSMO  4.300927161e-06   // gravitational constant, kpc km^2 s^-2 Msun^-1
+#define G_COSMO  (GN * (VELOCITY_UNIT/KM_CGS)*(VELOCITY_UNIT/KM_CGS))   // gravitational constant, kpc km^2 s^-2 Msun^-1
+//#define MSUN_CGS 1.98847e33        // Msun in gr
+//#define KPC_CGS  3.086e21          // kpc in cm
+#define MSUN_CGS MASS_UNIT           // Msun in gr
+#define KPC_CGS  LENGTH_UNIT         // kpc in cm
+//#define MH       1.673723746788804e-24      // Mass of hydrogen [g], NIST, 1.00794 amu
+#define MH          1.67262192369e-24  // mass of proton, grams, from NIST
+#define EV_CGS   1.602176634e-12     // eV in ergs
+#define K_EV     (EV_CGS/KB)         // Kelvin in eV
 
 #define LOG_FILE_NAME "run_output.log"
 
@@ -113,6 +128,9 @@ typedef double Real;
   #endif                           // GRAVITY_5_POINTS_GRADIENT
 
 typedef long int grav_int_t;
+//Default Gravity Compiler Flags
+  #define GRAVITY_LONG_INTS
+  #define COUPLE_GRAVITATIONAL_WORK
 #endif
 
 #ifdef PARTICLES
@@ -283,8 +301,13 @@ struct parameters {
   Real Omega_b;
   Real Init_redshift;
   Real End_redshift;
+  Real Init_temperature;
   char scale_outputs_file[MAXLEN];  // File for the scale_factor output values
                                     // for cosmological simulations
+  char cosmo_ics_pk_file[MAXLEN];   // File for the power spectrum used to 
+                                    // generate cosmological initial conditions
+  int cosmo_ics_random_seed;
+
 #endif                              // COSMOLOGY
 #ifdef TILED_INITIAL_CONDITIONS
   Real tile_length;
